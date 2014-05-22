@@ -9,7 +9,7 @@ import (
 //  NOTE: 根据 '\n' 来分行的, 如果 mac 上的 '\r' 则可以单独写一个
 func TrimSpace(src []byte) []byte {
 	byteSlices := bytes.Split(src, []byte{'\n'})
-	for i, byteSlicesLen := 0, len(byteSlices); i < byteSlicesLen; i++ {
+	for i := 0; i < len(byteSlices); i++ {
 		byteSlices[i] = bytes.TrimSpace(byteSlices[i])
 	}
 	return bytes.Join(byteSlices, nil)
@@ -19,7 +19,7 @@ func TrimSpace(src []byte) []byte {
 //  NOTE: 根据 '\n' 来分行的, 如果 mac 上的 '\r' 则可以单独写一个
 func TrimSpaceString(src string) string {
 	strs := strings.Split(src, "\n")
-	for i, strsLen := 0, len(strs); i < strsLen; i++ {
+	for i := 0; i < len(strs); i++ {
 		strs[i] = strings.TrimSpace(strs[i])
 	}
 	return strings.Join(strs, "")
