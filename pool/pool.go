@@ -1,28 +1,16 @@
-// 1.3 之前的 对象池 简单实现
+// go1.3 之前的 对象池 简单实现, go1.3 有了自己的对象池 sync.Pool
 package pool
-
-import (
-	"errors"
-)
 
 type Pool struct {
 	newFunc func() interface{}
 	buffer  chan interface{}
 }
 
-func New(New func() interface{}, size int) (*Pool, error) {
-	if New == nil {
-		return nil, errors.New("New == nil")
-	}
-	if size < 1 {
-		return nil, errors.New("size < 1")
-	}
-
-	p := &Pool{
+func New(New func() interface{}, size int) *Pool {
+	return &Pool{
 		newFunc: New,
 		buffer:  make(chan interface{}, size),
 	}
-	return p, nil
 }
 
 func (p *Pool) Get() interface{} {
