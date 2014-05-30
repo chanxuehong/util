@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package list implements a doubly linked list, fork from container/list.
+// Package list implements a doubly linked list, forked from container/list.
 //
 // To iterate over a list (where l is a *List):
 //	for e := l.Front(); e != nil; e = e.Next() {
@@ -11,9 +11,6 @@
 package list
 
 // Element is an element of a linked list.
-//
-//  note: You can restructure the public property "Value" and
-//  rebuild this package in special case, if you has the source of this package
 type Element struct {
 	// Next and previous pointers in the doubly-linked list of elements.
 	// To simplify the implementation, internally a list l is implemented
@@ -264,4 +261,22 @@ func (l *List) MoveAfter(e, mark *Element) *Element {
 		return e
 	}
 	return l.insertAfter(l.remove(e), mark)
+}
+
+// PushBackList inserts a copy of an other list at the back of list l.
+// The lists l and other may be the same.
+func (l *List) PushBackList(other *List) {
+	l.lazyInit()
+	for e := other.Front(); e != nil; e = e.Next() {
+		l.insertBefore(&Element{Value: e.Value}, &l.root)
+	}
+}
+
+// PushFrontList inserts a copy of an other list at the front of list l.
+// The lists l and other may be the same.
+func (l *List) PushFrontList(other *List) {
+	l.lazyInit()
+	for e := other.Back(); e != nil; e = e.Prev() {
+		l.insertAfter(&Element{Value: e.Value}, &l.root)
+	}
 }
