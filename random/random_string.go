@@ -83,10 +83,11 @@ func NewSessionIDString(newHash func() hash.Hash, salts ...string) []byte {
 
 	h := newHash()
 	h.Write(allSalts) // never returns an error.
-
 	hashsum := h.Sum(nil)
-	ret := make([]byte, len(nowNanosecond)+hex.EncodedLen(len(hashsum)))
-	copy(ret, nowNanosecond)
-	hex.Encode(ret[len(nowNanosecond):], hashsum)
+
+	hexHashSumLen := hex.EncodedLen(len(hashsum))
+	ret := make([]byte, hexHashSumLen+len(nowNanosecond))
+	hex.Encode(ret, hashsum)
+	copy(ret[hexHashSumLen:], nowNanosecond)
 	return ret
 }
