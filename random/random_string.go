@@ -8,24 +8,25 @@ import (
 	"time"
 )
 
-func commonRandomString(newHash func() hash.Hash,
-	localSalt []byte,
-	otherSalts []string) []byte {
-
+func commonRandomString(newHash func() hash.Hash, localSalt []byte, otherSalts []string) []byte {
 	var otherSaltsTotalLen int
 	for i := 0; i < len(otherSalts); i++ {
 		otherSaltsTotalLen += len(otherSalts[i])
 	}
 
-	nowNanosecond := strconv.FormatInt(time.Now().UnixNano(), 16)
-	// unix nanosecond + otherSalts + localSalt
+	nowNanosecond := strconv.FormatUint(uint64(time.Now().UnixNano()), 16)
+
+	// nowNanosecond + otherSalts + localSalt + pid + hostname
 	allSalts := make([]byte, len(nowNanosecond),
-		len(nowNanosecond)+otherSaltsTotalLen+len(localSalt))
+		len(nowNanosecond)+otherSaltsTotalLen+len(localSalt)+len(pid)+len(hostname))
+
 	copy(allSalts, nowNanosecond)
 	for i := 0; i < len(otherSalts); i++ {
 		allSalts = append(allSalts, otherSalts[i]...)
 	}
 	allSalts = append(allSalts, localSalt...)
+	allSalts = append(allSalts, pid...)
+	allSalts = append(allSalts, hostname...)
 
 	h := newHash()
 	h.Write(allSalts) // never returns an error.
@@ -33,30 +34,29 @@ func commonRandomString(newHash func() hash.Hash,
 	return h.Sum(nil)
 }
 
-// newHash = md5.New if nil
+// The returned bytes has not been hex encoded, is raw bytes.
+//  newHash = md5.New if nil
 func NewRandomString(newHash func() hash.Hash, salts ...string) []byte {
 	if newHash == nil {
 		newHash = md5.New
 	}
-	return commonRandomString(newHash, randomSalt, salts)
+	return commonRandomString(newHash, localRandomSalt, salts)
 }
 
-// The returned bytes have been hex encoded.
-//
-// newHash = md5.New if nil
+// The returned bytes has been hex encoded.
+//  newHash = md5.New if nil
 func NewTokenString(newHash func() hash.Hash, salts ...string) []byte {
 	if newHash == nil {
 		newHash = md5.New
 	}
-	token := commonRandomString(newHash, tokenSalt, salts)
+	token := commonRandomString(newHash, localTokenSalt, salts)
 	ret := make([]byte, hex.EncodedLen(len(token)))
 	hex.Encode(ret, token)
 	return ret
 }
 
 // The returned bytes have been hex encoded.
-//
-// newHash = md5.New if nil
+//  newHash = md5.New if nil
 func NewSessionIDString(newHash func() hash.Hash, salts ...string) []byte {
 	if newHash == nil {
 		newHash = md5.New
@@ -67,24 +67,26 @@ func NewSessionIDString(newHash func() hash.Hash, salts ...string) []byte {
 		saltsTotalLen += len(salts[i])
 	}
 
-	timenow := time.Now()
-	nowSecend := strconv.FormatUint(uint64(timenow.Unix()), 16)
-	nowNanosecond := strconv.FormatInt(timenow.UnixNano(), 16)
-	// unix nanosecond + salts + sessionSalt
+	nowNanosecond := strconv.FormatUint(uint64(time.Now().UnixNano()), 16)
+
+	// nowNanosecond + salts + localSessionSalt + pid + hostname
 	allSalts := make([]byte, len(nowNanosecond),
-		len(nowNanosecond)+saltsTotalLen+len(sessionSalt))
+		len(nowNanosecond)+saltsTotalLen+len(localSessionSalt)+len(pid)+len(hostname))
+
 	copy(allSalts, nowNanosecond)
 	for i := 0; i < len(salts); i++ {
 		allSalts = append(allSalts, salts[i]...)
 	}
-	allSalts = append(allSalts, sessionSalt...)
+	allSalts = append(allSalts, localSessionSalt...)
+	allSalts = append(allSalts, pid...)
+	allSalts = append(allSalts, hostname...)
 
 	h := newHash()
 	h.Write(allSalts) // never returns an error.
 
 	hashsum := h.Sum(nil)
-	ret := make([]byte, len(nowSecend)+hex.EncodedLen(len(hashsum)))
-	copy(ret, nowSecend)
-	hex.Encode(ret[len(nowSecend):], hashsum)
+	ret := make([]byte, len(nowNanosecond)+hex.EncodedLen(len(hashsum)))
+	copy(ret, nowNanosecond)
+	hex.Encode(ret[len(nowNanosecond):], hashsum)
 	return ret
 }
