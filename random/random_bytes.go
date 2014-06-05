@@ -2,7 +2,6 @@ package random
 
 import (
 	"crypto/md5"
-	"crypto/sha1"
 	"encoding/hex"
 	"hash"
 	"sync/atomic"
@@ -120,7 +119,7 @@ func NewSessionID(salts ...[]byte) []byte {
 	allSalts = append(allSalts, localSessionSalt...)
 	allSalts = append(allSalts, macAddr...)
 
-	hashSum := sha1.Sum(allSalts)
+	hashSum := md5.Sum(allSalts)
 	ret[12] = hashSum[12]
 	ret[13] = hashSum[13]
 	ret[14] = hashSum[14]
