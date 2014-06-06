@@ -53,7 +53,7 @@ func NewToken() []byte {
 
 // The returned bytes have been hex encoded.
 func NewSessionID() []byte {
-	// 32bits unixtime + 48bits mac + 16bits pid + 32bits clockSequence + 32bits md5 sum
+	// 32bits unixtime + 48bits mac + 16bits pid + 24bits clockSequence + 40bits md5 sum
 	ret := make([]byte, 20)
 
 	// 写入 32bits unixtime
@@ -73,10 +73,9 @@ func NewSessionID() []byte {
 
 	// 写入 clockSequence
 	seq := atomic.AddUint32(&sessionClockSequence, 1)
-	ret[12] = byte(seq >> 24)
-	ret[13] = byte(seq >> 16)
-	ret[14] = byte(seq >> 8)
-	ret[15] = byte(seq)
+	ret[12] = byte(seq >> 16)
+	ret[13] = byte(seq >> 8)
+	ret[14] = byte(seq)
 
 	// 写入 32bits hash sum
 
@@ -105,10 +104,11 @@ func NewSessionID() []byte {
 	copy(salt[14+localSaltLen:], macAddr)
 
 	hashSum := md5.Sum(salt)
-	ret[16] = hashSum[0]
-	ret[17] = hashSum[1]
-	ret[18] = hashSum[2]
-	ret[19] = hashSum[3]
+	ret[15] = hashSum[0]
+	ret[16] = hashSum[1]
+	ret[17] = hashSum[2]
+	ret[18] = hashSum[3]
+	ret[19] = hashSum[4]
 
 	hexRet := make([]byte, hex.EncodedLen(len(ret)))
 	hex.Encode(hexRet, ret)
