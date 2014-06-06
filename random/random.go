@@ -1,97 +1,116 @@
 package random
 
 import (
-	"bytes"
-	cryptoRand "crypto/rand"
-	"math/big"
-	mathRand "math/rand"
-	"net"
-	"os"
+	"crypto/md5"
+	"encoding/hex"
+	"sync/atomic"
 	"time"
 )
 
-const (
-	localSaltLen           = 128
-	localSaltNum           = 3
-	underlyingLocalSaltLen = localSaltLen * localSaltNum
-)
+func commonRandom(localSalt []byte, seq uint32) []byte {
+	// nowNanosecond + seq + pid + localSalt + macAddr
+	src := make([]byte, 8+4+2+localSaltLen+6)
 
-var (
-	macAddr       []byte // 本机的一个网卡的 MAC 地址, 如果没有则取随机数
-	pid           uint16 // 进程号
-	clockSequence uint32 // 类似 uuid 里的 clockSequence
+	nowNanosecond := uint64(time.Now().UnixNano())
+	src[0] = byte(nowNanosecond >> 56)
+	src[1] = byte(nowNanosecond >> 48)
+	src[2] = byte(nowNanosecond >> 40)
+	src[3] = byte(nowNanosecond >> 32)
+	src[4] = byte(nowNanosecond >> 24)
+	src[5] = byte(nowNanosecond >> 16)
+	src[6] = byte(nowNanosecond >> 8)
+	src[7] = byte(nowNanosecond)
 
-	// 不同的需求用不同的 local salt, 防止暴力猜. 所有的这些 local salt 切片一个底层的数组
-	// underlyingLocalSalt 的不同部分, 定期更新这个 underlyingLocalSalt 来达到更新不同的 local salt;
-	// NOTE: 因为 local salt 没有实际意义, 所以无需 lock.
-	underlyingLocalSalt [underlyingLocalSaltLen]byte
-	localRandomSalt     = underlyingLocalSalt[0*localSaltLen : 1*localSaltLen]
-	localTokenSalt      = underlyingLocalSalt[1*localSaltLen : 2*localSaltLen]
-	localSessionSalt    = underlyingLocalSalt[2*localSaltLen : 3*localSaltLen]
-)
+	src[8] = byte(seq >> 24)
+	src[9] = byte(seq >> 16)
+	src[10] = byte(seq >> 8)
+	src[11] = byte(seq)
 
-// 更新底层 salt 数组, 间接的更新了所有的 salt
-func updateUnderlyingLocalSalt() {
-	// 优先用 crypto/rand
-	var bi *big.Int
-	var err error
-	for i := 0; i < underlyingLocalSaltLen; i++ {
-		bi, err = cryptoRand.Prime(cryptoRand.Reader, 8) // 每次获取一个字节貌似性能比较好, 虽然不能保证最好
-		if err != nil {
-			goto MATH_RAND
-		}
-		underlyingLocalSalt[i] = bi.Bytes()[0]
-	}
+	src[12] = byte(pid >> 8)
+	src[13] = byte(pid)
 
-	return // crypto/rand 更新成功, 返回
+	copy(src[14:], localSalt)
+	copy(src[14+localSaltLen:], macAddr)
 
-	// crypto/rand 更新失败, 就用 math/rand 来更新
-MATH_RAND:
-	rd := mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
-	for i := 0; i < underlyingLocalSaltLen; i++ {
-		underlyingLocalSalt[i] = byte(rd.Uint32())
-	}
+	hashSum := md5.Sum(src)
+	return hashSum[:]
 }
 
-// 获取一个本机的 MAC 地址, 如果没有有效的则用随机数代替
-func getHardwareAddress() []byte {
-	itfs, err := net.Interfaces()
-	if err != nil {
-		goto generate_mac
-	}
-	for _, itf := range itfs {
-		if itf.Flags&net.FlagUp != 0 && // 接口是 up 的
-			itf.Flags&net.FlagLoopback == 0 && // 接口不是 loopback
-			len(itf.HardwareAddr) == 6 && // IEEE MAC-48, EUI-48
-			!bytes.Equal(itf.HardwareAddr, make([]byte, len(itf.HardwareAddr))) { // 不是全 0 地址
-
-			return itf.HardwareAddr
-		}
-	}
-
-generate_mac:
-	// 没有找到有效的 MAC 地址, 只能随机生成 MAC 地址了;
-	// 这里直接用 localRandomSalt 的前 6 位了
-	mac := localRandomSalt[:6]
-	mac[0] |= 0x01 // 设置多播标志, 以区分正常的 MAC
-	return mac
+// The returned bytes has not been hex encoded, is raw bytes.
+func NewRandom() []byte {
+	seq := atomic.AddUint32(&randomClockSequence, 1)
+	return commonRandom(localRandomSalt, seq)
 }
 
-func init() {
-	updateUnderlyingLocalSalt() // 初始化 salt
-	go func() {
-		ch := time.Tick(time.Minute * 5) // 每5分钟更新一次 salt
-		for {
-			select {
-			case <-ch:
-				updateUnderlyingLocalSalt()
-			}
-		}
-	}()
+// The returned bytes has been hex encoded.
+func NewToken() []byte {
+	seq := atomic.AddUint32(&tokenClockSequence, 1)
+	token := commonRandom(localTokenSalt, seq)
+	ret := make([]byte, hex.EncodedLen(len(token)))
+	hex.Encode(ret, token)
+	return ret
+}
 
-	macAddr = getHardwareAddress()
-	pid = uint16(os.Getpid())
+// The returned bytes have been hex encoded.
+func NewSessionID() []byte {
+	// 32bits unixtime + 48bits mac + 16bits pid + 32bits clockSequence + 32bits md5 sum
+	ret := make([]byte, 20)
 
-	mathRand.Seed(time.Now().UnixNano())
-	clockSequence = mathRand.Uint32()
+	// 写入 32bits unixtime
+	timenow := time.Now()
+	nowSecond := uint32(timenow.Unix())
+	ret[0] = byte(nowSecond >> 24)
+	ret[1] = byte(nowSecond >> 16)
+	ret[2] = byte(nowSecond >> 8)
+	ret[3] = byte(nowSecond)
+
+	// 写入 48bits mac
+	copy(ret[4:], macAddr)
+
+	// 写入 16bits pid
+	ret[10] = byte(pid >> 8)
+	ret[11] = byte(pid)
+
+	// 写入 clockSequence
+	seq := atomic.AddUint32(&sessionClockSequence, 1)
+	ret[12] = byte(seq >> 24)
+	ret[13] = byte(seq >> 16)
+	ret[14] = byte(seq >> 8)
+	ret[15] = byte(seq)
+
+	// 写入 32bits hash sum
+
+	// nowNanosecond + seq + pid + localSalt + macAddr
+	salt := make([]byte, 8+4+2+localSaltLen+6)
+
+	nowNanosecond := uint64(timenow.UnixNano())
+	salt[0] = byte(nowNanosecond >> 56)
+	salt[1] = byte(nowNanosecond >> 48)
+	salt[2] = byte(nowNanosecond >> 40)
+	salt[3] = byte(nowNanosecond >> 32)
+	salt[4] = byte(nowNanosecond >> 24)
+	salt[5] = byte(nowNanosecond >> 16)
+	salt[6] = byte(nowNanosecond >> 8)
+	salt[7] = byte(nowNanosecond)
+
+	salt[8] = byte(seq >> 24)
+	salt[9] = byte(seq >> 16)
+	salt[10] = byte(seq >> 8)
+	salt[11] = byte(seq)
+
+	salt[12] = byte(pid >> 8)
+	salt[13] = byte(pid)
+
+	copy(salt[14:], localSessionSalt)
+	copy(salt[14+localSaltLen:], macAddr)
+
+	hashSum := md5.Sum(salt)
+	ret[16] = hashSum[0]
+	ret[17] = hashSum[1]
+	ret[18] = hashSum[2]
+	ret[19] = hashSum[3]
+
+	hexRet := make([]byte, hex.EncodedLen(len(ret)))
+	hex.Encode(hexRet, ret)
+	return hexRet
 }
