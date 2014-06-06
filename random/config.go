@@ -75,8 +75,9 @@ func getHardwareAddress() []byte {
 
 generate_mac:
 	// 没有找到有效的 MAC 地址, 只能随机生成 MAC 地址了;
-	// 这里直接用 localRandomSalt 的前 6 位了
-	mac := localRandomSalt[:6]
+	// 这里直接用 localRandomSalt 的后 6 位了
+	mac := make([]byte, 6)
+	copy(mac, localRandomSalt[localSaltLen-6:])
 	mac[0] |= 0x01 // 设置多播标志, 以区分正常的 MAC
 	return mac
 }
@@ -96,8 +97,16 @@ func init() {
 	macAddr = getHardwareAddress()
 	pid = uint16(os.Getpid())
 
-	mathRand.Seed(time.Now().UnixNano())
-	randomClockSequence = mathRand.Uint32()
-	tokenClockSequence = mathRand.Uint32()
-	sessionClockSequence = mathRand.Uint32()
+	randomClockSequence = uint32(localRandomSalt[0])<<24 +
+		uint32(localRandomSalt[1])<<16 +
+		uint32(localRandomSalt[2])<<8 +
+		uint32(localRandomSalt[3])
+	tokenClockSequence = uint32(localTokenSalt[0])<<24 +
+		uint32(localTokenSalt[1])<<16 +
+		uint32(localTokenSalt[2])<<8 +
+		uint32(localTokenSalt[3])
+	sessionClockSequence = uint32(localSessionSalt[0])<<24 +
+		uint32(localSessionSalt[1])<<16 +
+		uint32(localSessionSalt[2])<<8 +
+		uint32(localSessionSalt[3])
 }
