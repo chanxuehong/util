@@ -58,7 +58,8 @@ func NewSessionID() []byte {
 	// 56bits unix nanosecond time + 48bits mac + 24bits clock sequence + 32bits md5 sum
 	ret := make([]byte, 20)
 
-	// 写入 56bits unix nanosecond time; 以 100 纳秒为单位, 写入低 56 bit
+	// 写入 56bits unix nanosecond time;
+	// 以 100 纳秒为单位, 写入低 56 bit, 这样跨度 228 年不会重复.
 	nowNanosecondX := nowNanosecond / 100
 	ret[0] = byte(nowNanosecondX >> 48)
 	ret[1] = byte(nowNanosecondX >> 40)
@@ -71,7 +72,7 @@ func NewSessionID() []byte {
 	// 写入 48bits mac
 	copy(ret[7:], macAddr)
 
-	// 写入 24bit clock sequence
+	// 写入 24bit clock sequence, 这样 100 纳秒内 16777216 个操作都不会重复
 	seq := atomic.AddUint32(&sessionClockSequence, 1)
 	ret[13] = byte(seq >> 16)
 	ret[14] = byte(seq >> 8)
@@ -79,6 +80,7 @@ func NewSessionID() []byte {
 
 	// 写入 32bits hash sum
 	salt := make([]byte, 8+4+2+localSaltLen+6) // nowNanosecond + seq + pid + localSessionSalt + macAddr
+	// 因为 ret 开头暴露了 nowNanosecond, 所以这里要混淆下
 	salt[0] = byte(nowNanosecond>>56) ^ localRandomSalt[4]
 	salt[1] = byte(nowNanosecond>>48) ^ localRandomSalt[5]
 	salt[2] = byte(nowNanosecond>>40) ^ localRandomSalt[6]
