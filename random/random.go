@@ -71,13 +71,13 @@ func NewSessionID() []byte {
 	ret[10] = byte(pid >> 8)
 	ret[11] = byte(pid)
 
-	// 写入 clockSequence
+	// 写入 24bit clock sequence
 	seq := atomic.AddUint32(&sessionClockSequence, 1)
 	ret[12] = byte(seq >> 16)
 	ret[13] = byte(seq >> 8)
 	ret[14] = byte(seq)
 
-	// 写入 32bits hash sum
+	// 写入 40bits hash sum
 
 	// nowNanosecond + seq + pid + localSalt + macAddr
 	salt := make([]byte, 8+4+2+localSaltLen+6)
