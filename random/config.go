@@ -97,7 +97,7 @@ func init() {
 	macAddr = getHardwareAddress()
 	pid = uint16(os.Getpid())
 
-	// 混淆 macAddr 和 pid;
+	// 混淆 macAddr;
 	// 可以根据自己的需要来混淆, 但是集群里所有的程序 macAddr 都要一样的混淆
 	macAddr[0] ^= 0x7f
 	macAddr[1] ^= 0xa3
@@ -105,7 +105,6 @@ func init() {
 	macAddr[3] ^= 0x8c
 	macAddr[4] ^= 0xe4
 	macAddr[5] ^= 0x67
-	pid ^= 0x789a
 
 	randomClockSequence = uint32(localRandomSalt[0])<<24 +
 		uint32(localRandomSalt[1])<<16 +
