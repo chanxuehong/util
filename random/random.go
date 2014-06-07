@@ -78,23 +78,26 @@ func NewSessionID() []byte {
 	ret[15] = byte(seq)
 
 	// 写入 32bits hash sum
-	salt := make([]byte, 8+4+localSaltLen+6) // nowNanosecond^pid + seq + localSessionSalt + macAddr
-	salt[0] = byte(nowNanosecond>>56) ^ byte(pid>>8)
-	salt[1] = byte(nowNanosecond>>48) ^ byte(pid)
-	salt[2] = byte(nowNanosecond>>40) ^ byte(pid>>8)
-	salt[3] = byte(nowNanosecond>>32) ^ byte(pid)
-	salt[4] = byte(nowNanosecond>>24) ^ byte(pid>>8)
-	salt[5] = byte(nowNanosecond>>16) ^ byte(pid)
-	salt[6] = byte(nowNanosecond>>8) ^ byte(pid>>8)
-	salt[7] = byte(nowNanosecond) ^ byte(pid)
+	salt := make([]byte, 8+4+2+localSaltLen+6) // nowNanosecond + seq + pid + localSessionSalt + macAddr
+	salt[0] = byte(nowNanosecond>>56) ^ localRandomSalt[4]
+	salt[1] = byte(nowNanosecond>>48) ^ localRandomSalt[5]
+	salt[2] = byte(nowNanosecond>>40) ^ localRandomSalt[6]
+	salt[3] = byte(nowNanosecond>>32) ^ localRandomSalt[7]
+	salt[4] = byte(nowNanosecond>>24) ^ localTokenSalt[4]
+	salt[5] = byte(nowNanosecond>>16) ^ localTokenSalt[5]
+	salt[6] = byte(nowNanosecond>>8) ^ localTokenSalt[6]
+	salt[7] = byte(nowNanosecond) ^ localTokenSalt[7]
 
 	salt[8] = byte(seq >> 24)
 	salt[9] = byte(seq >> 16)
 	salt[10] = byte(seq >> 8)
 	salt[11] = byte(seq)
 
-	copy(salt[12:], localSessionSalt)
-	copy(salt[12+localSaltLen:], macAddr)
+	salt[12] = byte(pid >> 8)
+	salt[13] = byte(pid)
+
+	copy(salt[14:], localSessionSalt)
+	copy(salt[14+localSaltLen:], macAddr)
 
 	hashSum := md5.Sum(salt)
 	ret[16] = hashSum[0]
