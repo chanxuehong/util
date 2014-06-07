@@ -17,8 +17,9 @@ const (
 )
 
 var (
-	macAddr []byte // 本机的一个网卡的 MAC 地址, 如果没有则取随机数
-	pid     uint16 // 进程号
+	hostname string
+	macAddr  []byte // 本机的一个网卡的 MAC 地址, 如果没有则取随机数
+	pid      uint16 // 进程号
 
 	// 类似 uuid 里的 clockSequence
 	randomClockSequence  uint32
@@ -94,8 +95,15 @@ func init() {
 		}
 	}()
 
+	hostname, _ = os.Hostname()
+	if len(hostname) < 2 {
+		hostname = "hostname"
+	}
+	hostnameBytes := []byte(hostname)
+	pidMask := uint16(hostnameBytes[0])<<8 + uint16(hostnameBytes[1])
+
 	macAddr = getHardwareAddress()
-	pid = uint16(os.Getpid())
+	pid = uint16(os.Getpid()) ^ pidMask // 混淆 pid
 
 	// 混淆 macAddr;
 	// 可以根据自己的需要来混淆, 但是集群里所有的程序 macAddr 都要一样的混淆
