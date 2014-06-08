@@ -51,23 +51,28 @@ func NewToken() []byte {
 	return ret
 }
 
+// 100 纳秒为单位的 unix time 时间戳
+func unix100NanoTimestamp(t time.Time) int64 {
+	return t.Unix()*1e7 + int64(t.Nanosecond()/100)
+}
+
 // The returned bytes have been hex encoded.
 func NewSessionID() []byte {
-	nowNanosecond := time.Now().UnixNano()
+	timenow := time.Now()
 
-	// 56bits unix nanosecond time + 48bits mac + 16bits pid + 24bits clock sequence + 48bits md5 sum
+	// 56bits unix 100*nanosecond time + 48bits mac + 16bits pid + 24bits clock sequence + 48bits md5 sum
 	ret := make([]byte, 24)
 
-	// 写入 56bits unix nanosecond time;
+	// 写入 56bits unix 100*nanosecond time;
 	// 以 100 纳秒为单位, 写入低 56 bit, 这样跨度 228 年不会重复.
-	nowNanosecondX := nowNanosecond / 100
-	ret[0] = byte(nowNanosecondX >> 48)
-	ret[1] = byte(nowNanosecondX >> 40)
-	ret[2] = byte(nowNanosecondX >> 32)
-	ret[3] = byte(nowNanosecondX >> 24)
-	ret[4] = byte(nowNanosecondX >> 16)
-	ret[5] = byte(nowNanosecondX >> 8)
-	ret[6] = byte(nowNanosecondX)
+	timestamp := unix100NanoTimestamp(timenow)
+	ret[0] = byte(timestamp >> 48)
+	ret[1] = byte(timestamp >> 40)
+	ret[2] = byte(timestamp >> 32)
+	ret[3] = byte(timestamp >> 24)
+	ret[4] = byte(timestamp >> 16)
+	ret[5] = byte(timestamp >> 8)
+	ret[6] = byte(timestamp)
 
 	// 写入 48bits mac
 	copy(ret[7:], macAddr)
@@ -85,6 +90,7 @@ func NewSessionID() []byte {
 	// 写入 48bits hash sum
 	salt := make([]byte, 8+4+2+localSaltLen+6) // nowNanosecond + seq + pid + localSessionSalt + macAddr
 	// 因为 ret 开头暴露了 nowNanosecond, 所以这里要混淆下
+	nowNanosecond := timenow.UnixNano()
 	salt[0] = byte(nowNanosecond>>56) ^ localRandomSalt[4]
 	salt[1] = byte(nowNanosecond>>48) ^ localRandomSalt[5]
 	salt[2] = byte(nowNanosecond>>40) ^ localRandomSalt[6]
