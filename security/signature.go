@@ -8,6 +8,7 @@ import (
 )
 
 // 对 content 做签名(hex后的结果).
+// NOTE: content 的顺序不一样结果也不一样.
 // @salt     hash 的盐
 // @content  待签名的 content
 func Signature(salt []byte, content ...[]byte) []byte {
