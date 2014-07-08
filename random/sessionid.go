@@ -12,7 +12,8 @@ func unix100nano(t time.Time) int64 {
 	return t.Unix()*1e7 + int64(t.Nanosecond()/100)
 }
 
-// 获取 sessionid, 理论上 325天 内不会重复, 对于 session 而言这个跨度基本满足了.
+// 获取 sessionid.
+// 理论上 325天 内不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
 //  NOTE: 返回的结果已经经过 base64 url 编码
 func NewSessionId() (id []byte) {
 	timenow := time.Now()
@@ -37,13 +38,16 @@ func NewSessionId() (id []byte) {
 	idx[13] = byte(pid)
 
 	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	seq := atomic.AddUint32(&sessionClockSequence, 1)
+	seq := atomic.AddUint64(&sessionClockSequence, 1)
 	idx[14] = byte(seq >> 8)
 	idx[15] = byte(seq)
 
-	// 写入 64bits hash sum, 让 sessionid 猜测的难度增加
+	// 写入 64bits hash sum, 让 sessionid 猜测的难度增加;
+	// 一定程度也能提高唯一性的概率, 特别是 timestamp 轮回(325天)后出现 timestamp+seq的低16位
+	// 和以前的某个时刻刚好相等, 但是这个时候 seq 和那个时候的 seq 不一定相等, 所以后面的
+	// hashsum 就很大可能不相等(SHA-1 的碰撞概率很低), 这样还是能保证唯一性!
 
-	hashSrc := make([]byte, 8+4+localSaltLen) // timestamp + seq + localSessionSalt
+	hashSrc := make([]byte, 8+8+localSaltLen) // timestamp + seq + localSessionSalt
 
 	// 因为 idx 开头暴露了 timestamp, 所以这里要混淆下
 	hashSrc[0] = byte(timestamp>>56) ^ localRandomSalt[0]
@@ -55,12 +59,17 @@ func NewSessionId() (id []byte) {
 	hashSrc[6] = byte(timestamp>>8) ^ localTokenSalt[2]
 	hashSrc[7] = byte(timestamp) ^ localTokenSalt[3]
 
-	hashSrc[8] = byte(seq >> 24)
-	hashSrc[9] = byte(seq >> 16)
-	hashSrc[10] = byte(seq >> 8)
-	hashSrc[11] = byte(seq)
+	// seq 整个 64bits 都写入进去
+	hashSrc[8] = byte(seq >> 56)
+	hashSrc[9] = byte(seq >> 48)
+	hashSrc[10] = byte(seq >> 40)
+	hashSrc[11] = byte(seq >> 32)
+	hashSrc[12] = byte(seq >> 24)
+	hashSrc[13] = byte(seq >> 16)
+	hashSrc[14] = byte(seq >> 8)
+	hashSrc[15] = byte(seq)
 
-	copy(hashSrc[12:], localSessionSalt)
+	copy(hashSrc[16:], localSessionSalt)
 
 	hashSum := sha1.Sum(hashSrc)
 

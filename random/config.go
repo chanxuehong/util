@@ -19,7 +19,7 @@ var (
 	hostname             string // 操作系统主机名
 	pid                  uint16 // 进程号
 	macAddr              []byte // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
-	sessionClockSequence uint32 // 类似 uuid 里的 clockSequence
+	sessionClockSequence uint64 // 类似 uuid 里的 clockSequence
 
 	// 不同的需求用不同的 local salt, 防止暴力猜. 所有的这些 local salt 切片一个底层的数组
 	// underlyingLocalSalt 的不同部分
@@ -111,8 +111,12 @@ func init() {
 	macAddr[4] ^= 0x9a
 	macAddr[5] ^= 0xbc
 
-	sessionClockSequence = uint32(localSessionSalt[0])<<24 +
-		uint32(localSessionSalt[1])<<16 +
-		uint32(localSessionSalt[2])<<8 +
-		uint32(localSessionSalt[3])
+	sessionClockSequence = uint64(localSessionSalt[0])<<56 +
+		uint64(localSessionSalt[1])<<48 +
+		uint64(localSessionSalt[2])<<40 +
+		uint64(localSessionSalt[3])<<32 +
+		uint64(localSessionSalt[4])<<24 +
+		uint64(localSessionSalt[5])<<16 +
+		uint64(localSessionSalt[6])<<8 +
+		uint64(localSessionSalt[7])
 }
