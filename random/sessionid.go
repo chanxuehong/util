@@ -2,7 +2,7 @@ package random
 
 import (
 	"crypto/sha1"
-	"encoding/hex"
+	"encoding/base64"
 	"sync/atomic"
 	"time"
 )
@@ -13,7 +13,7 @@ func unix100nano(t time.Time) int64 {
 }
 
 // 获取 sessionid, 理论上 325天 内不会重复, 对于 session 而言这个跨度基本满足了.
-//  NOTE: 返回的结果已经经过 hex 编码
+//  NOTE: 返回的结果已经经过 base64 url 编码
 func NewSessionId() []byte {
 	timenow := time.Now()
 
@@ -73,7 +73,7 @@ func NewSessionId() []byte {
 	ret[22] = hashSum[18]
 	ret[23] = hashSum[19]
 
-	hexRet := make([]byte, hex.EncodedLen(len(ret)))
-	hex.Encode(hexRet, ret)
+	hexRet := make([]byte, 32)
+	base64.URLEncoding.Encode(hexRet, ret)
 	return hexRet
 }
