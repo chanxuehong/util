@@ -32,9 +32,9 @@ func NewRandom() []byte {
 }
 
 // 返回的结果已经经过 hex 编码
-func NewToken() []byte {
-	token := commonRandom(localTokenSalt)
-	ret := make([]byte, hex.EncodedLen(len(token)))
-	hex.Encode(ret, token)
-	return ret
+func NewToken() (token []byte) {
+	tokenx := commonRandom(localTokenSalt)
+	token = make([]byte, hex.EncodedLen(len(tokenx)))
+	hex.Encode(token, tokenx)
+	return
 }
