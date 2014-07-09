@@ -12,17 +12,51 @@ func unix100nano(t time.Time) int64 {
 	return t.Unix()*1e7 + int64(t.Nanosecond()/100)
 }
 
+// 获取一个不重复的 id, 58455年 内基本不会重复.
+//  NOTE: 返回的结果是 24字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
+func NewId() (id []byte) {
+	timestamp := unix100nano(time.Now())
+
+	// 64bits unix100nano + 48bits mac + 16bits pid + 16bits clock sequence
+	idx := make([]byte, 18)
+
+	// 写入 64bits unix100nano, 这样跨度 58455年 不会重复
+	idx[0] = byte(timestamp >> 56)
+	idx[1] = byte(timestamp >> 48)
+	idx[2] = byte(timestamp >> 40)
+	idx[3] = byte(timestamp >> 32)
+	idx[4] = byte(timestamp >> 24)
+	idx[5] = byte(timestamp >> 16)
+	idx[6] = byte(timestamp >> 8)
+	idx[7] = byte(timestamp)
+
+	// 写入 48bits mac
+	copy(idx[8:], macAddr)
+
+	// 写入 16bits pid
+	idx[14] = byte(pid >> 8)
+	idx[15] = byte(pid)
+
+	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
+	seq := atomic.AddUint32(&idClockSequence, 1)
+	idx[16] = byte(seq >> 8)
+	idx[17] = byte(seq)
+
+	id = make([]byte, 24)
+	base64.URLEncoding.Encode(id, idx)
+	return
+}
+
 // 获取 sessionid.
-// 理论上 325天 内不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
-//  NOTE: 返回的结果已经经过 base64 url 编码
+// 325天 内基本不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
+//  NOTE: 返回的结果是 32字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
 func NewSessionId() (id []byte) {
-	timenow := time.Now()
+	timestamp := unix100nano(time.Now())
 
 	// 48bits unix100nano + 48bits mac + 16bits pid + 16bits clock sequence + 64bits SHA-1 sum
 	idx := make([]byte, 24)
 
-	// 写入 48bits unix100nano; 写入低 48 bit, 这样跨度 325天 不会重复.
-	timestamp := unix100nano(timenow)
+	// 写入 48bits unix100nano; 写入低 48 bit, 这样跨度 325天 不会重复
 	idx[0] = byte(timestamp >> 40)
 	idx[1] = byte(timestamp >> 32)
 	idx[2] = byte(timestamp >> 24)
@@ -38,7 +72,7 @@ func NewSessionId() (id []byte) {
 	idx[13] = byte(pid)
 
 	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	seq := atomic.AddUint64(&sessionClockSequence, 1)
+	seq := atomic.AddUint64(&sessionIdClockSequence, 1)
 	idx[14] = byte(seq >> 8)
 	idx[15] = byte(seq)
 
