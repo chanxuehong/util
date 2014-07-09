@@ -36,6 +36,14 @@ func NewId() (id []byte) {
 	return
 }
 
+// 获取一个不重复的 id, 136年 内基本不会重复.
+//  NOTE: 返回的结果是 16 字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
+func NewIdEx() (id []byte) {
+	id = make([]byte, 16)
+	base64.URLEncoding.Encode(id, NewId())
+	return
+}
+
 // 返回参数 t time.Time 的 unix 时间, 单位是 100 纳秒
 func unix100nano(t time.Time) int64 {
 	return t.Unix()*1e7 + int64(t.Nanosecond()/100)
