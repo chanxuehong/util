@@ -3,6 +3,7 @@ package random
 import (
 	"bytes"
 	cryptoRand "crypto/rand"
+	"crypto/sha1"
 	mathRand "math/rand"
 	"net"
 	"os"
@@ -19,6 +20,7 @@ var (
 	hostname               string // 操作系统主机名
 	pid                    uint16 // 进程号
 	macAddr                []byte // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
+	macAddrHashSum         []byte // macAddr 的 SHA-1 结果的前 3 个字节
 	sessionIdClockSequence uint64 // 类似 uuid 里的 clockSequence
 	idClockSequence        uint32 // 类似 uuid 里的 clockSequence
 
@@ -98,11 +100,9 @@ func init() {
 	}
 	hostnameBytes := []byte(hostname)
 	pidMask := uint16(hostnameBytes[0])<<8 + uint16(hostnameBytes[1])
-
-	pid = uint16(os.Getpid()) ^ pidMask // 混淆 pid
+	pid = uint16(os.Getpid()) ^ pidMask // 获取 pid 并混淆 pid
 
 	macAddr = getHardwareAddress()
-
 	// 混淆 macAddr;
 	//  NOTE: 可以根据自己的需要来混淆, 但是集群里所有的程序 macAddr 都要一样的混淆
 	macAddr[0] ^= 0x12
@@ -111,6 +111,9 @@ func init() {
 	macAddr[3] ^= 0x78
 	macAddr[4] ^= 0x9a
 	macAddr[5] ^= 0xbc
+
+	macAddrHashSumArray := sha1.Sum(macAddr)
+	macAddrHashSum = macAddrHashSumArray[:3]
 
 	sessionIdClockSequence = uint64(localSessionSalt[0])<<56 +
 		uint64(localSessionSalt[1])<<48 +

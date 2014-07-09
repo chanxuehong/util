@@ -7,49 +7,43 @@ import (
 	"time"
 )
 
+// 获取一个不重复的 id, 136年 内基本不会重复.
+//  NOTE: 返回的结果是 12 字节的原始数组, 包括不显示字符.
+func NewId() (id []byte) {
+	// 32bits unixtime + 24bits mac hashsum + 16bits pid + 24bits clock sequence
+	id = make([]byte, 12)
+
+	// 写入 32bits unixtime, 这样跨度 136年 不会重复
+	timestamp := time.Now().Unix()
+	id[0] = byte(timestamp >> 24)
+	id[1] = byte(timestamp >> 16)
+	id[2] = byte(timestamp >> 8)
+	id[3] = byte(timestamp)
+
+	// 写入 24bits mac hashsum
+	copy(id[4:], macAddrHashSum)
+
+	// 写入 16bits pid
+	id[7] = byte(pid >> 8)
+	id[8] = byte(pid)
+
+	// 写入 24bit clock sequence, 这样 1 秒内 16777216 个操作都不会重复
+	seq := atomic.AddUint32(&idClockSequence, 1)
+	id[9] = byte(seq >> 16)
+	id[10] = byte(seq >> 8)
+	id[11] = byte(seq)
+
+	return
+}
+
 // 返回参数 t time.Time 的 unix 时间, 单位是 100 纳秒
 func unix100nano(t time.Time) int64 {
 	return t.Unix()*1e7 + int64(t.Nanosecond()/100)
 }
 
-// 获取一个不重复的 id, 58455年 内基本不会重复.
-//  NOTE: 返回的结果是 24字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
-func NewId() (id []byte) {
-	timestamp := unix100nano(time.Now())
-
-	// 64bits unix100nano + 48bits mac + 16bits pid + 16bits clock sequence
-	idx := make([]byte, 18)
-
-	// 写入 64bits unix100nano, 这样跨度 58455年 不会重复
-	idx[0] = byte(timestamp >> 56)
-	idx[1] = byte(timestamp >> 48)
-	idx[2] = byte(timestamp >> 40)
-	idx[3] = byte(timestamp >> 32)
-	idx[4] = byte(timestamp >> 24)
-	idx[5] = byte(timestamp >> 16)
-	idx[6] = byte(timestamp >> 8)
-	idx[7] = byte(timestamp)
-
-	// 写入 48bits mac
-	copy(idx[8:], macAddr)
-
-	// 写入 16bits pid
-	idx[14] = byte(pid >> 8)
-	idx[15] = byte(pid)
-
-	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	seq := atomic.AddUint32(&idClockSequence, 1)
-	idx[16] = byte(seq >> 8)
-	idx[17] = byte(seq)
-
-	id = make([]byte, 24)
-	base64.URLEncoding.Encode(id, idx)
-	return
-}
-
 // 获取 sessionid.
 // 325天 内基本不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
-//  NOTE: 返回的结果是 32字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
+//  NOTE: 返回的结果是 32 字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
 func NewSessionId() (id []byte) {
 	timestamp := unix100nano(time.Now())
 
