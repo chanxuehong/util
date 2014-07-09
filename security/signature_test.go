@@ -6,7 +6,7 @@ import (
 )
 
 func TestSignature(t *testing.T) {
-	Signature(nil, nil) // 检查极端环境下是否 panic
+	Signature(nil) // 检查极端环境下是否 panic
 
 	var salt = []byte("salt")
 
@@ -23,7 +23,7 @@ func TestSignature(t *testing.T) {
 	}
 }
 
-func TestMapSignature(t *testing.T) {
+func TestSignatureEx(t *testing.T) {
 	m := map[string][]byte{
 		"b": []byte("valueB"),
 		"a": []byte("valueA"),
@@ -32,9 +32,9 @@ func TestMapSignature(t *testing.T) {
 
 	salt := []byte("salt")
 	hashSum0 := Signature(salt, []byte("valueAvalueBvalueC"))
-	hashSum1 := MapSignature(salt, m)
+	hashSum1 := SignatureEx(salt, m)
 
 	if !bytes.Equal(hashSum0, hashSum1) {
-		t.Error("test MapSignature() failed")
+		t.Error("test SignatureEx() failed")
 	}
 }
