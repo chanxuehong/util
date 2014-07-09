@@ -18,9 +18,8 @@ func Signature(salt []byte, content ...[]byte) (hashsum []byte) {
 	}
 	_hashsum := h.Sum(nil)
 
-	hashsum = make([]byte, 40)
-	hex.Encode(hashsum, _hashsum)
-	hashsum = hashsum[8:]
+	hashsum = make([]byte, 32)
+	hex.Encode(hashsum, _hashsum[:16])
 	return
 }
 
