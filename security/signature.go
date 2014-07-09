@@ -1,21 +1,21 @@
 package security
 
 import (
-	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
 	"sort"
 )
 
 // 对 content(可以为多个) 做签名(hex后的结果).
-//  @salt     hash 的盐
+//  @salt     hash 的盐(要足够长)
 //  @content  待签名的 content
 //  NOTE: content 的顺序不一样结果也不一样.
 func Signature(salt []byte, content ...[]byte) (hashsum []byte) {
-	h := hmac.New(sha1.New, salt)
+	h := sha1.New()
 	for i := 0; i < len(content); i++ {
 		h.Write(content[i])
 	}
+	h.Write(salt)
 	_hashsum := h.Sum(nil)
 
 	hashsum = make([]byte, 32)
@@ -24,7 +24,7 @@ func Signature(salt []byte, content ...[]byte) (hashsum []byte) {
 }
 
 // 对 map[string][]byte 的 values 做签名(hex后的结果).
-//  @salt    hash 的盐
+//  @salt    hash 的盐(要足够长)
 //  @kvs     key-value pairs
 func SignatureEx(salt []byte, kvs map[string][]byte) (hashsum []byte) {
 	kvsLen := len(kvs)
