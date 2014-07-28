@@ -17,7 +17,6 @@ const (
 )
 
 var (
-	hostname               string // 操作系统主机名
 	pid                    uint16 // 进程号
 	macAddr                []byte // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
 	macAddrHashSum         []byte // macAddr 的 SHA-1 结果的前 3 个字节
@@ -64,10 +63,10 @@ func getHardwareAddress() []byte {
 		goto GEN_MAC_BY_RAND
 	}
 	for _, itf := range interfaces {
-		if itf.Flags&net.FlagUp != 0 && // 接口是 up 的
+		if itf.Flags&net.FlagUp == net.FlagUp && // 接口是 up 的
 			itf.Flags&net.FlagLoopback == 0 && // 接口不是 loopback
 			len(itf.HardwareAddr) == 6 && // IEEE MAC-48, EUI-48
-			!bytes.Equal(itf.HardwareAddr, []byte("000000")) {
+			!bytes.Equal(itf.HardwareAddr, make([]byte, 6)) /* 不是全0的MAC */ {
 
 			return itf.HardwareAddr
 		}
@@ -94,12 +93,12 @@ func init() {
 		}
 	}()
 
-	hostname, _ = os.Hostname()
+	hostname, _ := os.Hostname()
 	if len(hostname) < 2 {
 		hostname = "hostname"
 	}
 	hostnameBytes := []byte(hostname)
-	pidMask := uint16(hostnameBytes[0])<<8 + uint16(hostnameBytes[1])
+	pidMask := uint16(hostnameBytes[0])<<8 | uint16(hostnameBytes[1])
 	pid = uint16(os.Getpid()) ^ pidMask // 获取 pid 并混淆 pid
 
 	macAddr = getHardwareAddress()
