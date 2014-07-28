@@ -9,7 +9,7 @@ import (
 
 // 获取一个不重复的 id, 136年 内基本不会重复.
 //  NOTE: 返回的结果是 12 字节的原始数组, 包括不显示字符.
-func NewId() (id []byte) {
+func NewRawId() (id []byte) {
 	// 32bits unixtime + 24bits mac hashsum + 16bits pid + 24bits clock sequence
 	id = make([]byte, 12)
 
@@ -38,9 +38,9 @@ func NewId() (id []byte) {
 
 // 获取一个不重复的 id, 136年 内基本不会重复.
 //  NOTE: 返回的结果是 16 字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
-func NewIdEx() (id []byte) {
+func NewId() (id []byte) {
 	id = make([]byte, 16)
-	base64.URLEncoding.Encode(id, NewId())
+	base64.URLEncoding.Encode(id, NewRawId())
 	return
 }
 
@@ -78,10 +78,10 @@ func NewSessionId() (id []byte) {
 	idx[14] = byte(seq >> 8)
 	idx[15] = byte(seq)
 
-	// 写入 64bits hash sum, 让 sessionid 猜测的难度增加;
-	// 一定程度也能提高唯一性的概率, 特别是 timestamp 轮回(325天)后出现 timestamp+seq的低16位
-	// 和以前的某个时刻刚好相等, 但是这个时候 seq 和那个时候的 seq 不一定相等, 所以后面的
-	// hashsum 就很大可能不相等(SHA-1 的碰撞概率很低), 这样还是能保证唯一性!
+	// 写入 64bits hash sum, 让 sessionid 猜测的难度增加; 一定程度也能提高唯一性的概率,
+	// 特别是 timestamp 轮回(325天)后出现 timestamp的低48位 + seq的低16位和以前的某个时刻刚好相等,
+	// 但是这个时候 timestamp 和 seq 和那个时候的不一定相等, localSessionSalt 更难相等,
+	// 所以后面的 hashsum 就很大可能不相等(SHA-1 的碰撞概率很低), 这样还是能保证唯一性!
 
 	hashSrc := make([]byte, 8+8+localSaltLen) // timestamp + seq + localSessionSalt
 
@@ -107,16 +107,16 @@ func NewSessionId() (id []byte) {
 
 	copy(hashSrc[16:], localSessionSalt)
 
-	hashSum := sha1.Sum(hashSrc)
+	hashSumArray := sha1.Sum(hashSrc)
 
-	idx[16] = hashSum[12]
-	idx[17] = hashSum[13]
-	idx[18] = hashSum[14]
-	idx[19] = hashSum[15]
-	idx[20] = hashSum[16]
-	idx[21] = hashSum[17]
-	idx[22] = hashSum[18]
-	idx[23] = hashSum[19]
+	idx[16] = hashSumArray[12]
+	idx[17] = hashSumArray[13]
+	idx[18] = hashSumArray[14]
+	idx[19] = hashSumArray[15]
+	idx[20] = hashSumArray[16]
+	idx[21] = hashSumArray[17]
+	idx[22] = hashSumArray[18]
+	idx[23] = hashSumArray[19]
 
 	id = make([]byte, 32)
 	base64.URLEncoding.Encode(id, idx)

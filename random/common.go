@@ -22,12 +22,12 @@ func commonRandom(localSalt []byte) []byte {
 
 	copy(src[8:], localSalt)
 
-	hashSum := md5.Sum(src)
-	return hashSum[:]
+	hashSumArray := md5.Sum(src)
+	return hashSumArray[:]
 }
 
 // 返回的结果没有经过 hex 编码, 不是可显示的字符串
-func NewRandom() []byte {
+func NewRawRandom() []byte {
 	return commonRandom(localRandomSalt)
 }
 
