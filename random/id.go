@@ -8,7 +8,7 @@ import (
 )
 
 // 获取一个不重复的 id, 136年 内基本不会重复.
-//  NOTE: 返回的结果是 12 字节的原始数组, 包括不显示字符.
+//  NOTE: 返回的结果是 12 字节的原始数组.
 func NewRawId() (id []byte) {
 	// 32bits unixtime + 24bits mac hashsum + 16bits pid + 24bits clock sequence
 	id = make([]byte, 12)
@@ -20,12 +20,12 @@ func NewRawId() (id []byte) {
 	id[2] = byte(timestamp >> 8)
 	id[3] = byte(timestamp)
 
-	// 写入 24bits mac hashsum
-	copy(id[4:], macAddrHashSum)
+	// 写入 24bits macAddrSHA1HashSum
+	copy(id[4:], macAddrSHA1HashSum[:3])
 
 	// 写入 16bits pid
-	id[7] = byte(pid >> 8)
-	id[8] = byte(pid)
+	id[7] = byte(processId >> 8)
+	id[8] = byte(processId)
 
 	// 写入 24bit clock sequence, 这样 1 秒内 16777216 个操作都不会重复
 	seq := atomic.AddUint32(&idClockSequence, 1)
@@ -67,11 +67,11 @@ func NewSessionId() (id []byte) {
 	idx[5] = byte(timestamp)
 
 	// 写入 48bits mac
-	copy(idx[6:], macAddr)
+	copy(idx[6:], macAddr[:])
 
 	// 写入 16bits pid
-	idx[12] = byte(pid >> 8)
-	idx[13] = byte(pid)
+	idx[12] = byte(processId >> 8)
+	idx[13] = byte(processId)
 
 	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
 	seq := atomic.AddUint64(&sessionIdClockSequence, 1)
@@ -109,14 +109,14 @@ func NewSessionId() (id []byte) {
 
 	hashSumArray := sha1.Sum(hashSrc)
 
-	idx[16] = hashSumArray[12]
-	idx[17] = hashSumArray[13]
-	idx[18] = hashSumArray[14]
-	idx[19] = hashSumArray[15]
-	idx[20] = hashSumArray[16]
-	idx[21] = hashSumArray[17]
-	idx[22] = hashSumArray[18]
-	idx[23] = hashSumArray[19]
+	idx[16] = hashSumArray[0]
+	idx[17] = hashSumArray[1]
+	idx[18] = hashSumArray[2]
+	idx[19] = hashSumArray[3]
+	idx[20] = hashSumArray[4]
+	idx[21] = hashSumArray[5]
+	idx[22] = hashSumArray[6]
+	idx[23] = hashSumArray[7]
 
 	id = make([]byte, 32)
 	base64.URLEncoding.Encode(id, idx)

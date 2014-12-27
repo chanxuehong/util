@@ -5,14 +5,16 @@ import (
 	"strings"
 )
 
+var newlineBytes = []byte{'\n'}
+
 // 去掉 src 开头和结尾的空白, 如果 src 包括换行, 去掉换行和这个换行符两边的空白
 //  NOTE: 根据 '\n' 来分行的, 某些系统或软件用 '\r' 来分行, 则不能正常工作.
 func TrimSpace(src []byte) []byte {
-	byteSlices := bytes.Split(src, []byte{'\n'})
-	for i := 0; i < len(byteSlices); i++ {
-		byteSlices[i] = bytes.TrimSpace(byteSlices[i])
+	bytesArr := bytes.Split(src, newlineBytes)
+	for i := 0; i < len(bytesArr); i++ {
+		bytesArr[i] = bytes.TrimSpace(bytesArr[i])
 	}
-	return bytes.Join(byteSlices, nil)
+	return bytes.Join(bytesArr, nil)
 }
 
 // 去掉 src 开头和结尾的空白, 如果 src 包括换行, 去掉换行和这个换行符两边的空白
