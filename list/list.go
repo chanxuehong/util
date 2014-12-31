@@ -64,6 +64,22 @@ func New() *List { return new(List).Init() }
 // The complexity is O(1).
 func (l *List) Len() int { return l.len }
 
+// Front returns the first element of list l or nil
+func (l *List) Front() *Element {
+	if l.len == 0 {
+		return nil
+	}
+	return l.root.next
+}
+
+// Back returns the last element of list l or nil.
+func (l *List) Back() *Element {
+	if l.len == 0 {
+		return nil
+	}
+	return l.root.prev
+}
+
 // lazyInit lazily initializes a zero List value.
 func (l *List) lazyInit() {
 	if l.root.next == nil {
@@ -109,22 +125,6 @@ func (l *List) remove(e *Element) *Element {
 	return e
 }
 
-// Front returns the first element of list l or nil
-func (l *List) Front() *Element {
-	if l.len == 0 {
-		return nil
-	}
-	return l.root.next
-}
-
-// Back returns the last element of list l or nil.
-func (l *List) Back() *Element {
-	if l.len == 0 {
-		return nil
-	}
-	return l.root.prev
-}
-
 // Remove removes e from l if e is an element of list l and returns e.
 //  CAUTION: if e is not an element of list l, will crash
 func (l *List) Remove(e *Element) *Element {
@@ -134,24 +134,6 @@ func (l *List) Remove(e *Element) *Element {
 	// if e.list == l, l must have been initialized when e was inserted
 	// in l or l == nil (e is a zero Element) and l.remove will crash
 	return l.remove(e)
-}
-
-// RemoveFront removes the first element of list l,
-// and returns the element or nil if l is empty.
-func (l *List) RemoveFront() *Element {
-	if l.len == 0 {
-		return nil
-	}
-	return l.remove(l.root.next)
-}
-
-// RemoveBack removes the last element of list l,
-// and returns the element or nil if l is empty.
-func (l *List) RemoveBack() *Element {
-	if l.len == 0 {
-		return nil
-	}
-	return l.remove(l.root.prev)
 }
 
 // PushFront inserts a new element e at the front of list l and returns e.
@@ -279,4 +261,22 @@ func (l *List) PushFrontList(other *List) {
 	for e := other.Back(); e != nil; e = e.Prev() {
 		l.insertAfter(&Element{Value: e.Value}, &l.root)
 	}
+}
+
+// RemoveFront removes the first element of list l,
+// and returns the element or nil if l is empty.
+func (l *List) RemoveFront() *Element {
+	if l.len == 0 {
+		return nil
+	}
+	return l.remove(l.root.next)
+}
+
+// RemoveBack removes the last element of list l,
+// and returns the element or nil if l is empty.
+func (l *List) RemoveBack() *Element {
+	if l.len == 0 {
+		return nil
+	}
+	return l.remove(l.root.prev)
 }
