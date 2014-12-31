@@ -84,12 +84,12 @@ func (l *List) insertAfter(e, at *Element) *Element {
 	return e
 }
 
-// insertBefore inserts e before bf, increments l.len, and returns e.
-//  ensure that e is not an element of any list and bf is an element of list l.
-func (l *List) insertBefore(e, bf *Element) *Element {
-	p := bf.prev
-	bf.prev = e
-	e.next = bf
+// insertBefore inserts e before at, increments l.len, and returns e.
+//  ensure that e is not an element of any list and at is an element of list l.
+func (l *List) insertBefore(e, at *Element) *Element {
+	p := at.prev
+	at.prev = e
+	e.next = at
 	e.prev = p
 	p.next = e
 	e.list = l
