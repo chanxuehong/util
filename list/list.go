@@ -8,6 +8,7 @@
 //	for e := l.Front(); e != nil; e = e.Next() {
 //		// do something with e.Value
 //	}
+//
 package list
 
 // Element is an element of a linked list.
@@ -64,7 +65,7 @@ func New() *List { return new(List).Init() }
 // The complexity is O(1).
 func (l *List) Len() int { return l.len }
 
-// Front returns the first element of list l or nil
+// Front returns the first element of list l or nil.
 func (l *List) Front() *Element {
 	if l.len == 0 {
 		return nil
