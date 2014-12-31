@@ -250,7 +250,7 @@ func (l *List) MoveAfter(e, mark *Element) *Element {
 // The lists l and other may be the same.
 func (l *List) PushBackList(other *List) {
 	l.lazyInit()
-	for e := other.Front(); e != nil; e = e.Next() {
+	for i, e := other.Len(), other.Front(); i > 0; i, e = i-1, e.Next() {
 		l.insertBefore(&Element{Value: e.Value}, &l.root)
 	}
 }
@@ -259,7 +259,7 @@ func (l *List) PushBackList(other *List) {
 // The lists l and other may be the same.
 func (l *List) PushFrontList(other *List) {
 	l.lazyInit()
-	for e := other.Back(); e != nil; e = e.Prev() {
+	for i, e := other.Len(), other.Back(); i > 0; i, e = i-1, e.Prev() {
 		l.insertAfter(&Element{Value: e.Value}, &l.root)
 	}
 }
