@@ -10,7 +10,7 @@ const (
 	secondsPerDay = 24 * 60 * 60
 
 	utcToBeijing = 8 * 60 * 60
-	beijingToUtc = -utcToBeijing
+	beijingToUTC = -utcToBeijing
 )
 
 // UTC unixtime 转换为北京时间的 unixtime.
@@ -25,7 +25,7 @@ func TimeToBeijingUnix(t time.Time) int64 {
 
 // 北京时间的 unixtime 转换为 UTC unixtime.
 func BeijingUnixToUTCUnix(n int64) int64 {
-	return n + beijingToUtc
+	return n + beijingToUTC
 }
 
 // 北京时间的 unixtime 转换为 time.Time, BeijingLocation.
@@ -48,7 +48,7 @@ func TimeToBeijingUnixDay(t time.Time) int64 {
 	return BeijingUnixToBeijingUnixDay(TimeToBeijingUnix(t))
 }
 
-// 北京时间的 unixtime 转换为 北京时间的 unixtime.
+// 北京时间距 1970-01-01 的天数转换为北京时间的 unixtime.
 func BeijingUnixDayToBeijingUnix(n int64) int64 {
 	return n * secondsPerDay
 }
