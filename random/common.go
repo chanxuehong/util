@@ -3,12 +3,12 @@ package random
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"sync/atomic"
 	"time"
 )
 
 func commonRandom(localSalt []byte) []byte {
-	// nowNanosecond + localSalt
-	src := make([]byte, 8+localSaltLen)
+	src := make([]byte, 8+2+localSaltLen) // nowNanosecond + seq + localSalt
 
 	nowNanosecond := time.Now().UnixNano()
 	src[0] = byte(nowNanosecond >> 56)
@@ -20,7 +20,11 @@ func commonRandom(localSalt []byte) []byte {
 	src[6] = byte(nowNanosecond >> 8)
 	src[7] = byte(nowNanosecond)
 
-	copy(src[8:], localSalt)
+	seq := atomic.AddUint32(&randomClockSequence, 1)
+	src[8] = byte(seq >> 8)
+	src[9] = byte(seq)
+
+	copy(src[10:], localSalt)
 
 	hashSumArray := md5.Sum(src)
 	return hashSumArray[:]
