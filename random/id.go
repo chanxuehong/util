@@ -4,12 +4,8 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"sync"
+	"sync/atomic"
 	"time"
-)
-
-var (
-	idMutex         sync.Mutex
-	idLastTimestamp int64
 )
 
 // 获取一个不重复的 id, 136 年内基本不会重复.
@@ -34,16 +30,7 @@ func NewId() (id [12]byte) {
 	id[8] = byte(pid)
 
 	// 写入 24bit clock sequence, 这样 1 秒内 16777216 个操作都不会重复
-	var seq uint32
-
-	idMutex.Lock()
-	if timestamp <= idLastTimestamp {
-		idClockSequence++
-	}
-	seq = idClockSequence
-	idLastTimestamp = timestamp
-	idMutex.Unlock()
-
+	seq := atomic.AddUint32(&idClockSequence, 1)
 	id[9] = byte(seq >> 16)
 	id[10] = byte(seq >> 8)
 	id[11] = byte(seq)
@@ -87,13 +74,11 @@ func NewSessionId() (id []byte) {
 	idx[13] = byte(pid)
 
 	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	var seq uint64
-
 	sessionIdMutex.Lock()
 	if timestamp <= sessionIdLastTimestamp {
 		sessionIdClockSequence++
 	}
-	seq = sessionIdClockSequence
+	seq := sessionIdClockSequence
 	sessionIdLastTimestamp = timestamp
 	sessionIdMutex.Unlock()
 

@@ -40,13 +40,11 @@ func NewUUIDV1() (u [16]byte) {
 	u[6] |= 0x10
 
 	// set clock sequence, 14bits
-	var seq uint32
-
 	uuidMutex.Lock()
 	if timestamp <= uuidLastTimestamp {
 		uuidClockSequence++
 	}
-	seq = uuidClockSequence
+	seq := uuidClockSequence
 	uuidLastTimestamp = timestamp
 	uuidMutex.Unlock()
 
