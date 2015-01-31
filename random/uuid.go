@@ -1,7 +1,7 @@
 package random
 
 import (
-	"sync/atomic"
+	"sync"
 	"time"
 )
 
@@ -13,6 +13,11 @@ const (
 func uuid100ns(t time.Time) uint64 {
 	return unix100ns(t) + unixToUUID
 }
+
+var (
+	uuidMutex         sync.Mutex
+	uuidLastTimestamp uint64
+)
 
 // 返回 uuid, version == 1.
 //  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.
@@ -35,7 +40,16 @@ func NewUUIDV1() (u [16]byte) {
 	u[6] |= 0x10
 
 	// set clock sequence, 14bits
-	seq := atomic.AddUint32(&uuidClockSequence, 1)
+	var seq uint32
+
+	uuidMutex.Lock()
+	if timestamp <= uuidLastTimestamp {
+		uuidClockSequence++
+	}
+	seq = uuidClockSequence
+	uuidLastTimestamp = timestamp
+	uuidMutex.Unlock()
+
 	u[8] = byte(seq>>8) & 0x3F
 	u[9] = byte(seq)
 

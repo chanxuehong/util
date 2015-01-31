@@ -3,8 +3,13 @@ package random
 import (
 	"crypto/sha1"
 	"encoding/base64"
-	"sync/atomic"
+	"sync"
 	"time"
+)
+
+var (
+	idMutex         sync.Mutex
+	idLastTimestamp int64
 )
 
 // 获取一个不重复的 id, 136 年内基本不会重复.
@@ -29,7 +34,16 @@ func NewId() (id [12]byte) {
 	id[8] = byte(pid)
 
 	// 写入 24bit clock sequence, 这样 1 秒内 16777216 个操作都不会重复
-	seq := atomic.AddUint32(&idClockSequence, 1)
+	var seq uint32
+
+	idMutex.Lock()
+	if timestamp <= idLastTimestamp {
+		idClockSequence++
+	}
+	seq = idClockSequence
+	idLastTimestamp = timestamp
+	idMutex.Unlock()
+
 	id[9] = byte(seq >> 16)
 	id[10] = byte(seq >> 8)
 	id[11] = byte(seq)
@@ -41,6 +55,11 @@ func NewId() (id [12]byte) {
 func unix100ns(t time.Time) uint64 {
 	return uint64(t.Unix())*1e7 + uint64(t.Nanosecond())/100
 }
+
+var (
+	sessionIdMutex         sync.Mutex
+	sessionIdLastTimestamp uint64
+)
 
 // 获取 sessionid.
 // 325 天内基本不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
@@ -68,7 +87,16 @@ func NewSessionId() (id []byte) {
 	idx[13] = byte(pid)
 
 	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	seq := atomic.AddUint64(&sessionIdClockSequence, 1)
+	var seq uint64
+
+	sessionIdMutex.Lock()
+	if timestamp <= sessionIdLastTimestamp {
+		sessionIdClockSequence++
+	}
+	seq = sessionIdClockSequence
+	sessionIdLastTimestamp = timestamp
+	sessionIdMutex.Unlock()
+
 	idx[14] = byte(seq >> 8)
 	idx[15] = byte(seq)
 
