@@ -50,7 +50,7 @@ func NewSessionId() (id []byte) {
 	timestamp := unix100ns(time.Now())
 
 	// 48bits unix100nano + 48bits mac + 16bits pid + 16bits clock sequence + 64bits SHA1 sum
-	idx := make([]byte, 24)
+	var idx [24]byte
 
 	// 写入 48bits unix100nano; 写入低 48 bit, 这样跨度 325 天不会重复
 	idx[0] = byte(timestamp >> 40)
@@ -77,7 +77,7 @@ func NewSessionId() (id []byte) {
 	// 但是这个时候 timestamp 和 seq 和那个时候的不一定相等, localSessionIdSalt 更难相等,
 	// 所以后面的 hashsum 就很大可能不相等(SHA1 的碰撞概率很低), 这样还是能保证唯一性!
 
-	src := make([]byte, 8+8+localSaltLen) // timestamp + seq + localSessionIdSalt
+	var src [8 + 8 + localSaltLen]byte // timestamp + seq + localSessionIdSalt
 
 	src[0] = byte(timestamp >> 56)
 	src[1] = byte(timestamp >> 48)
@@ -99,7 +99,7 @@ func NewSessionId() (id []byte) {
 
 	copy(src[16:], localSessionIdSalt)
 
-	hashSum := sha1.Sum(src)
+	hashSum := sha1.Sum(src[:])
 
 	idx[16] = hashSum[0]
 	idx[17] = hashSum[1]
@@ -111,6 +111,6 @@ func NewSessionId() (id []byte) {
 	idx[23] = hashSum[7]
 
 	id = make([]byte, 32)
-	base64.URLEncoding.Encode(id, idx)
+	base64.URLEncoding.Encode(id, idx[:])
 	return
 }

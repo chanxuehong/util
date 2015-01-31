@@ -56,7 +56,7 @@ UPDATE_BY_MATH_RAND:
 	}
 }
 
-var zeroMAC = make([]byte, 6)
+var zeroMAC [6]byte
 
 // 获取一个本机的 MAC 地址, 如果没有有效的则用随机数代替.
 func getMAC() (mac [6]byte) {
@@ -69,7 +69,7 @@ func getMAC() (mac [6]byte) {
 		if itf.Flags&net.FlagUp == net.FlagUp && // 接口是 up 的
 			itf.Flags&net.FlagLoopback == 0 && // 接口不是 loopback
 			len(itf.HardwareAddr) == 6 && // IEEE MAC-48, EUI-48
-			!bytes.Equal(itf.HardwareAddr, zeroMAC) /* 不是全0的MAC */ {
+			!bytes.Equal(itf.HardwareAddr, zeroMAC[:]) /* 不是全0的MAC */ {
 
 			copy(mac[:], itf.HardwareAddr)
 			return

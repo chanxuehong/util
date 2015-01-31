@@ -8,7 +8,7 @@ import (
 )
 
 func commonRandom(localSalt []byte) (random [16]byte) {
-	src := make([]byte, 8+2+localSaltLen) // nowNanosecond + seq + localSalt
+	var src [8 + 2 + localSaltLen]byte // nowNanosecond + seq + localSalt
 
 	nowNanosecond := time.Now().UnixNano()
 	src[0] = byte(nowNanosecond >> 56)
@@ -26,7 +26,7 @@ func commonRandom(localSalt []byte) (random [16]byte) {
 
 	copy(src[10:], localSalt)
 
-	random = md5.Sum(src)
+	random = md5.Sum(src[:])
 	return
 }
 
