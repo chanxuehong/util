@@ -7,13 +7,14 @@ import (
 	"time"
 )
 
-// 获取一个不重复的 id, 136年 内基本不会重复.
-//  NOTE: 返回的结果是 12 字节的原始数组.
-func NewRawId() (id []byte) {
+// 获取一个不重复的 id, 136 年内基本不会重复.
+//  NOTE:
+//  返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符,
+//  特别的, id 的 url_base64 编码不包含等号(=), 只有 1-9,a-z,A-Z,-,_ 字符.
+func NewId() (id [12]byte) {
 	// 32bits unixtime + 24bits mac hashsum + 16bits pid + 24bits clock sequence
-	id = make([]byte, 12)
 
-	// 写入 32bits unixtime, 这样跨度 136年 不会重复
+	// 写入 32bits unixtime, 这样跨度 136 年不会重复
 	timestamp := time.Now().Unix()
 	id[0] = byte(timestamp >> 24)
 	id[1] = byte(timestamp >> 16)
@@ -36,29 +37,22 @@ func NewRawId() (id []byte) {
 	return
 }
 
-// 获取一个不重复的 id, 136年 内基本不会重复.
-//  NOTE: 返回的结果是 16 字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
-func NewId() (id []byte) {
-	id = make([]byte, 16)
-	base64.URLEncoding.Encode(id, NewRawId())
-	return
-}
-
-// 返回参数 t time.Time 的 unix 时间, 单位是 100 纳秒.
-func unix100nano(t time.Time) int64 {
-	return t.Unix()*1e7 + int64(t.Nanosecond()/100)
+// 返回 time.Time 的 unix 时间, 单位是 100ns.
+func unix100ns(t time.Time) uint64 {
+	return uint64(t.Unix())*1e7 + uint64(t.Nanosecond())/100
 }
 
 // 获取 sessionid.
-// 325天 内基本不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
-//  NOTE: 返回的结果是 32 字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_
+// 325 天内基本不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
+//  NOTE:
+//  返回的结果是 32 字节的 url base64 编码, 不包含等号(=), 只有 1-9,a-z,A-Z,-,_ 字符.
 func NewSessionId() (id []byte) {
-	timestamp := unix100nano(time.Now())
+	timestamp := unix100ns(time.Now())
 
 	// 48bits unix100nano + 48bits mac + 16bits pid + 16bits clock sequence + 64bits SHA1 sum
 	idx := make([]byte, 24)
 
-	// 写入 48bits unix100nano; 写入低 48 bit, 这样跨度 325天 不会重复
+	// 写入 48bits unix100nano; 写入低 48 bit, 这样跨度 325 天不会重复
 	idx[0] = byte(timestamp >> 40)
 	idx[1] = byte(timestamp >> 32)
 	idx[2] = byte(timestamp >> 24)
@@ -83,38 +77,38 @@ func NewSessionId() (id []byte) {
 	// 但是这个时候 timestamp 和 seq 和那个时候的不一定相等, localSessionIdSalt 更难相等,
 	// 所以后面的 hashsum 就很大可能不相等(SHA1 的碰撞概率很低), 这样还是能保证唯一性!
 
-	hashSrc := make([]byte, 8+8+localSaltLen) // timestamp + seq + localSessionIdSalt
+	src := make([]byte, 8+8+localSaltLen) // timestamp + seq + localSessionIdSalt
 
-	hashSrc[0] = byte(timestamp >> 56)
-	hashSrc[1] = byte(timestamp >> 48)
-	hashSrc[2] = byte(timestamp>>40) ^ localRandomSalt[4]
-	hashSrc[3] = byte(timestamp>>32) ^ localRandomSalt[5]
-	hashSrc[4] = byte(timestamp>>24) ^ localRandomSalt[6]
-	hashSrc[5] = byte(timestamp>>16) ^ localRandomSalt[7]
-	hashSrc[6] = byte(timestamp>>8) ^ localTokenSalt[4]
-	hashSrc[7] = byte(timestamp) ^ localTokenSalt[5]
+	src[0] = byte(timestamp >> 56)
+	src[1] = byte(timestamp >> 48)
+	src[2] = byte(timestamp>>40) ^ localRandomSalt[4]
+	src[3] = byte(timestamp>>32) ^ localRandomSalt[5]
+	src[4] = byte(timestamp>>24) ^ localRandomSalt[6]
+	src[5] = byte(timestamp>>16) ^ localRandomSalt[7]
+	src[6] = byte(timestamp>>8) ^ localTokenSalt[4]
+	src[7] = byte(timestamp) ^ localTokenSalt[5]
 
-	hashSrc[8] = byte(seq >> 56)
-	hashSrc[9] = byte(seq >> 48)
-	hashSrc[10] = byte(seq >> 40)
-	hashSrc[11] = byte(seq >> 32)
-	hashSrc[12] = byte(seq >> 24)
-	hashSrc[13] = byte(seq >> 16)
-	hashSrc[14] = byte(seq>>8) ^ localTokenSalt[6]
-	hashSrc[15] = byte(seq) ^ localTokenSalt[7]
+	src[8] = byte(seq >> 56)
+	src[9] = byte(seq >> 48)
+	src[10] = byte(seq >> 40)
+	src[11] = byte(seq >> 32)
+	src[12] = byte(seq >> 24)
+	src[13] = byte(seq >> 16)
+	src[14] = byte(seq>>8) ^ localTokenSalt[6]
+	src[15] = byte(seq) ^ localTokenSalt[7]
 
-	copy(hashSrc[16:], localSessionIdSalt)
+	copy(src[16:], localSessionIdSalt)
 
-	hashSumArray := sha1.Sum(hashSrc)
+	hashSum := sha1.Sum(src)
 
-	idx[16] = hashSumArray[0]
-	idx[17] = hashSumArray[1]
-	idx[18] = hashSumArray[2]
-	idx[19] = hashSumArray[3]
-	idx[20] = hashSumArray[4]
-	idx[21] = hashSumArray[5]
-	idx[22] = hashSumArray[6]
-	idx[23] = hashSumArray[7]
+	idx[16] = hashSum[0]
+	idx[17] = hashSum[1]
+	idx[18] = hashSum[2]
+	idx[19] = hashSum[3]
+	idx[20] = hashSum[4]
+	idx[21] = hashSum[5]
+	idx[22] = hashSum[6]
+	idx[23] = hashSum[7]
 
 	id = make([]byte, 32)
 	base64.URLEncoding.Encode(id, idx)

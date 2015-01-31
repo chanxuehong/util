@@ -29,6 +29,7 @@ var (
 
 	randomClockSequence    uint32
 	idClockSequence        uint32
+	uuidClockSequence      uint32
 	sessionIdClockSequence uint64
 
 	pid            uint16   // 进程号
@@ -104,6 +105,11 @@ func init() {
 		uint32(localTokenSalt[1])<<16 |
 		uint32(localTokenSalt[2])<<8 |
 		uint32(localTokenSalt[3])
+
+	uuidClockSequence = uint32(localSessionIdSalt[8])<<24 |
+		uint32(localSessionIdSalt[9])<<16 |
+		uint32(localSessionIdSalt[10])<<8 |
+		uint32(localSessionIdSalt[11])
 
 	sessionIdClockSequence = uint64(localSessionIdSalt[0])<<56 |
 		uint64(localSessionIdSalt[1])<<48 |

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func commonRandom(localSalt []byte) []byte {
+func commonRandom(localSalt []byte) (random [16]byte) {
 	src := make([]byte, 8+2+localSaltLen) // nowNanosecond + seq + localSalt
 
 	nowNanosecond := time.Now().UnixNano()
@@ -26,19 +26,21 @@ func commonRandom(localSalt []byte) []byte {
 
 	copy(src[10:], localSalt)
 
-	hashSumArray := md5.Sum(src)
-	return hashSumArray[:]
+	random = md5.Sum(src)
+	return
 }
 
-// 返回的结果没有经过 hex 编码, 不是可显示的字符串
-func NewRawRandom() []byte {
+// NewRandom 返回一个随机数.
+//  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符
+func NewRandom() [16]byte {
 	return commonRandom(localRandomSalt)
 }
 
-// 返回的结果已经经过 hex 编码
+// NewToken 返回一个32字节的随机数.
+//  NOTE: 返回的结果已经经过 hex 编码.
 func NewToken() (token []byte) {
-	tokenx := commonRandom(localTokenSalt)
-	token = make([]byte, hex.EncodedLen(len(tokenx)))
-	hex.Encode(token, tokenx)
+	random := commonRandom(localTokenSalt)
+	token = make([]byte, hex.EncodedLen(len(random)))
+	hex.Encode(token, random[:])
 	return
 }
