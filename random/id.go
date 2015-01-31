@@ -55,10 +55,10 @@ var (
 func NewSessionId() (id []byte) {
 	timestamp := unix100ns(time.Now())
 
-	// 48bits unix100nano + 48bits mac + 16bits pid + 16bits clock sequence + 64bits SHA1 sum
+	// 48bits unix100ns + 48bits mac + 16bits pid + 16bits clock sequence + 64bits SHA1 sum
 	var idx [24]byte
 
-	// 写入 48bits unix100nano; 写入低 48 bit, 这样跨度 325 天不会重复
+	// 写入 48bits unix100ns; 写入低 48 bit, 这样跨度 325 天不会重复
 	idx[0] = byte(timestamp >> 40)
 	idx[1] = byte(timestamp >> 32)
 	idx[2] = byte(timestamp >> 24)
