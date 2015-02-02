@@ -15,18 +15,15 @@ func unix100ns(t time.Time) uint64 {
 const sessionIdSaltLen = 39
 
 var (
-	sessionIdSalt = make([]byte, sessionIdSaltLen)
+	sessionIdSalt = underlyingSalt[randomSaltLen : randomSaltLen+sessionIdSaltLen]
 
 	sessionIdMutex         sync.Mutex
 	sessionIdLastTimestamp uint64
 	sessionIdClockSequence uint64
-	sessionIdRandomFactor  uint64
 )
 
 func init() {
-	readRandomBytes(sessionIdSalt)
 	sessionIdClockSequence = newRandomUint64()
-	sessionIdRandomFactor = newRandomUint64()
 }
 
 // 获取 sessionid.
@@ -58,15 +55,13 @@ func NewSessionId() (id []byte) {
 	if timestamp <= sessionIdLastTimestamp {
 		sessionIdClockSequence++
 	}
-	clockSequence := sessionIdClockSequence
-	sessionIdRandomFactor++
-	randomFactor := sessionIdRandomFactor
+	seq := sessionIdClockSequence
 	sessionIdLastTimestamp = timestamp
 	sessionIdMutex.Unlock()
 
 	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	idx[14] = byte(clockSequence >> 8)
-	idx[15] = byte(clockSequence)
+	idx[14] = byte(seq >> 8)
+	idx[15] = byte(seq)
 
 	// 写入 64bits hashsum, 让 sessionid 猜测的难度增加, 一定程度也能提高唯一性的概率;
 	// 特别是 timestamp 轮回325天后出现 timestamp 的低48位 + seq 的低16位和以前的某个时刻刚好相等,
@@ -77,21 +72,21 @@ func NewSessionId() (id []byte) {
 
 	src[0] = byte(timestamp >> 56)
 	src[1] = byte(timestamp >> 48)
-	src[2] = byte(timestamp>>40) ^ byte(randomFactor>>56)
-	src[3] = byte(timestamp>>32) ^ byte(randomFactor>>48)
-	src[4] = byte(timestamp>>24) ^ byte(randomFactor>>40)
-	src[5] = byte(timestamp>>16) ^ byte(randomFactor>>32)
-	src[6] = byte(timestamp>>8) ^ byte(randomFactor>>24)
-	src[7] = byte(timestamp) ^ byte(randomFactor>>16)
+	src[2] = byte(timestamp>>40) ^ randomSalt[0]
+	src[3] = byte(timestamp>>32) ^ randomSalt[1]
+	src[4] = byte(timestamp>>24) ^ randomSalt[2]
+	src[5] = byte(timestamp>>16) ^ randomSalt[3]
+	src[6] = byte(timestamp>>8) ^ randomSalt[4]
+	src[7] = byte(timestamp) ^ randomSalt[5]
 
-	src[8] = byte(clockSequence >> 56)
-	src[9] = byte(clockSequence >> 48)
-	src[10] = byte(clockSequence >> 40)
-	src[11] = byte(clockSequence >> 32)
-	src[12] = byte(clockSequence >> 24)
-	src[13] = byte(clockSequence >> 16)
-	src[14] = byte(clockSequence>>8) ^ byte(randomFactor>>8)
-	src[15] = byte(clockSequence) ^ byte(randomFactor)
+	src[8] = byte(seq >> 56)
+	src[9] = byte(seq >> 48)
+	src[10] = byte(seq >> 40)
+	src[11] = byte(seq >> 32)
+	src[12] = byte(seq >> 24)
+	src[13] = byte(seq >> 16)
+	src[14] = byte(seq>>8) ^ randomSalt[6]
+	src[15] = byte(seq) ^ randomSalt[7]
 
 	copy(src[16:], sessionIdSalt)
 
