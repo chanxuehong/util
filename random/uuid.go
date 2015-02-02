@@ -60,6 +60,6 @@ func NewUUIDV1() (uuid [16]byte) {
 	uuid[8] |= 0x80
 
 	// set node, 48bits
-	copy(uuid[10:], mac[:])
+	copy(uuid[10:], realMac[:])
 	return
 }
