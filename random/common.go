@@ -10,7 +10,7 @@ import (
 var (
 	pid            uint16   // 进程号
 	realMAC        [6]byte  // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
-	mac            [6]byte  // realMac 混淆后的结果
+	mac            [6]byte  // realMAC 混淆后的结果
 	macSHA1HashSum [20]byte // mac 的 SHA1 哈希码
 )
 
