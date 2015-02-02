@@ -24,6 +24,7 @@ func init() {
 
 	realMAC = getMAC()
 
+	// 获取 mac 并混淆, 请保证集群中所有的混淆要一致!!!
 	mac = realMAC
 	mac[0] ^= 0x12
 	mac[1] ^= 0x34
