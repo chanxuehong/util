@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-// 全局的 math/rand.Rand.
+// 全局的 math/rand.Rand
 //  NOTE:
-//  使用 var 初始化, 其他直接或简洁依赖readRandomBytes的全局变量都是通过 init() 来初始化.
+//  使用 var 初始化, 其他直接或简洁依赖 readRandomBytes 的全局变量都是通过 init() 来初始化.
 var globalMathRand = mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
 
 // 读取随机的字节到 p []byte 里面.
