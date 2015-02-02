@@ -17,29 +17,33 @@ func uuid100ns(t time.Time) uint64 {
 var (
 	uuidMutex         sync.Mutex
 	uuidLastTimestamp uint64
+	uuidClockSequence uint32
 )
 
-// 返回 uuid, version == 1.
-//  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.
-func NewUUIDV1() (u [16]byte) {
+func init() {
+	uuidClockSequence = newRandomUint32()
+}
+
+// 返回 uuid, Ver1.
+//  NOTE: 返回的是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.
+func NewUUIDV1() (uuid [16]byte) {
 	timestamp := uuid100ns(time.Now())
 
 	// set timestamp, 60bits
-	u[0] = byte(timestamp >> 24)
-	u[1] = byte(timestamp >> 16)
-	u[2] = byte(timestamp >> 8)
-	u[3] = byte(timestamp)
+	uuid[0] = byte(timestamp >> 24)
+	uuid[1] = byte(timestamp >> 16)
+	uuid[2] = byte(timestamp >> 8)
+	uuid[3] = byte(timestamp)
 
-	u[4] = byte(timestamp >> 40)
-	u[5] = byte(timestamp >> 32)
+	uuid[4] = byte(timestamp >> 40)
+	uuid[5] = byte(timestamp >> 32)
 
-	u[6] = byte(timestamp>>56) & 0x0F
-	u[7] = byte(timestamp >> 48)
+	uuid[6] = byte(timestamp>>56) & 0x0F
+	uuid[7] = byte(timestamp >> 48)
 
 	// set version, 4bits
-	u[6] |= 0x10
+	uuid[6] |= 0x10
 
-	// set clock sequence, 14bits
 	uuidMutex.Lock()
 	if timestamp <= uuidLastTimestamp {
 		uuidClockSequence++
@@ -48,13 +52,14 @@ func NewUUIDV1() (u [16]byte) {
 	uuidLastTimestamp = timestamp
 	uuidMutex.Unlock()
 
-	u[8] = byte(seq>>8) & 0x3F
-	u[9] = byte(seq)
+	// set clock sequence, 14bits
+	uuid[8] = byte(seq>>8) & 0x3F
+	uuid[9] = byte(seq)
 
 	// set variant
-	u[8] |= 0x80
+	uuid[8] |= 0x80
 
 	// set node, 48bits
-	copy(u[10:], mac[:])
+	copy(uuid[10:], mac[:])
 	return
 }

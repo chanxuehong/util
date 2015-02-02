@@ -1,46 +1,61 @@
 package random
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"sync/atomic"
-	"time"
+	"bytes"
+	"crypto/sha1"
+	"net"
+	"os"
 )
 
-func commonRandom(localSalt []byte) (random [16]byte) {
-	var src [8 + 2 + localSaltLen]byte // nowNanosecond + seq + localSalt
+var (
+	pid            uint16   // 进程号
+	mac            [6]byte  // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
+	macSHA1HashSum [20]byte // mac 的 SHA1 哈希码
+)
 
-	nowNanosecond := time.Now().UnixNano()
-	src[0] = byte(nowNanosecond >> 56)
-	src[1] = byte(nowNanosecond >> 48)
-	src[2] = byte(nowNanosecond >> 40)
-	src[3] = byte(nowNanosecond >> 32)
-	src[4] = byte(nowNanosecond >> 24)
-	src[5] = byte(nowNanosecond >> 16)
-	src[6] = byte(nowNanosecond >> 8)
-	src[7] = byte(nowNanosecond)
+func init() {
+	hostname, _ := os.Hostname()
+	if len(hostname) < 2 {
+		hostname = "hostname"
+	}
+	pidMask := uint16(hostname[0])<<8 | uint16(hostname[1])
+	pid = uint16(os.Getpid()) ^ pidMask // 获取 pid 并混淆 pid
 
-	seq := atomic.AddUint32(&randomClockSequence, 1)
-	src[8] = byte(seq >> 8)
-	src[9] = byte(seq)
+	mac = getMAC()
+	macSHA1HashSum = sha1.Sum(mac[:])
 
-	copy(src[10:], localSalt)
-
-	random = md5.Sum(src[:])
-	return
+	// 混淆 mac;
+	// NOTE: 可以根据自己的需要来混淆, 但是集群里所有的程序 mac 都要一样的混淆
+	mac[0] ^= 0x12
+	mac[1] ^= 0x34
+	mac[2] ^= 0x56
+	mac[3] ^= 0x78
+	mac[4] ^= 0x9a
+	mac[5] ^= 0xbc
 }
 
-// NewRandom 返回一个随机数.
-//  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符
-func NewRandom() [16]byte {
-	return commonRandom(localRandomSalt)
-}
+var zeroMAC [6]byte
 
-// NewToken 返回一个32字节的随机数.
-//  NOTE: 返回的结果已经经过 hex 编码.
-func NewToken() (token []byte) {
-	random := commonRandom(localTokenSalt)
-	token = make([]byte, hex.EncodedLen(len(random)))
-	hex.Encode(token, random[:])
+// 获取一个本机的 MAC 地址, 如果没有有效的则用随机数代替.
+func getMAC() (mac [6]byte) {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		goto GEN_MAC_BY_RAND
+	}
+
+	for _, itf := range interfaces {
+		if itf.Flags&net.FlagUp == net.FlagUp && // 接口是 up 的
+			itf.Flags&net.FlagLoopback == 0 && // 接口不是 loopback
+			len(itf.HardwareAddr) == 6 && // IEEE MAC-48, EUI-48
+			!bytes.Equal(itf.HardwareAddr, zeroMAC[:]) /* 不是全0的MAC */ {
+
+			copy(mac[:], itf.HardwareAddr)
+			return
+		}
+	}
+
+GEN_MAC_BY_RAND:
+	readRandomBytes(mac[:])
+	mac[0] |= 0x01 // 设置多播标志, 以区分正常的 MAC
 	return
 }
