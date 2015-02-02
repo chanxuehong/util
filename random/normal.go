@@ -5,18 +5,16 @@ import (
 	"encoding/hex"
 	"sync/atomic"
 	"time"
+
+	"github.com/chanxuehong/util/random/internal"
 )
 
 const randomSaltLen = 45
 
 var (
-	randomSalt          = underlyingSalt[:randomSaltLen]
-	randomClockSequence uint32
+	randomSalt          []byte = underlyingSalt[:randomSaltLen]
+	randomClockSequence uint32 = internal.NewRandomUint32()
 )
-
-func init() {
-	randomClockSequence = newRandomUint32()
-}
 
 // NewRandom 返回一个随机字节数组.
 //  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符

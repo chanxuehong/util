@@ -3,13 +3,11 @@ package random
 import (
 	"sync/atomic"
 	"time"
+
+	"github.com/chanxuehong/util/random/internal"
 )
 
-var idClockSequence uint32
-
-func init() {
-	idClockSequence = newRandomUint32()
-}
+var idClockSequence uint32 = internal.NewRandomUint32()
 
 // 获取一个不重复的 id, 136 年内基本不会重复.
 //  NOTE:

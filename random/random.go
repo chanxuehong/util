@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	"github.com/chanxuehong/util/random/internal"
 )
 
 var (
@@ -21,14 +23,14 @@ var (
 )
 
 func init() {
-	readRandomBytes(underlyingSalt[:]) // 初始化 underlyingSalt
+	internal.ReadRandomBytes(underlyingSalt[:]) // 初始化 underlyingSalt
 
 	go func() { // 启动一个 goroutine 定期更新 underlyingSalt
 		tickChan := time.Tick(time.Minute * 5)
 		for {
 			select {
 			case <-tickChan:
-				readRandomBytes(underlyingSalt[:])
+				internal.ReadRandomBytes(underlyingSalt[:])
 			}
 		}
 	}()
@@ -75,7 +77,7 @@ func getMAC() (mac [6]byte) {
 	}
 
 GEN_MAC_BY_RAND:
-	readRandomBytes(mac[:])
+	internal.ReadRandomBytes(mac[:])
 	mac[0] |= 0x01 // 设置多播标志, 以区分正常的 MAC
 	return
 }

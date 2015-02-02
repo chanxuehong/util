@@ -3,6 +3,8 @@ package random
 import (
 	"sync"
 	"time"
+
+	"github.com/chanxuehong/util/random/internal"
 )
 
 const (
@@ -17,12 +19,8 @@ func uuid100ns(t time.Time) uint64 {
 var (
 	uuidMutex         sync.Mutex
 	uuidLastTimestamp uint64
-	uuidClockSequence uint32
+	uuidClockSequence uint32 = internal.NewRandomUint32()
 )
-
-func init() {
-	uuidClockSequence = newRandomUint32()
-}
 
 // 返回 uuid, Ver1.
 //  NOTE: 返回的是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.

@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"sync"
 	"time"
+
+	"github.com/chanxuehong/util/random/internal"
 )
 
 // 返回 time.Time 的 unix 时间, 单位是 100ns.
@@ -15,16 +17,12 @@ func unix100ns(t time.Time) uint64 {
 const sessionIdSaltLen = 39
 
 var (
-	sessionIdSalt = underlyingSalt[randomSaltLen : randomSaltLen+sessionIdSaltLen]
+	sessionIdSalt []byte = underlyingSalt[randomSaltLen : randomSaltLen+sessionIdSaltLen]
 
 	sessionIdMutex         sync.Mutex
 	sessionIdLastTimestamp uint64
-	sessionIdClockSequence uint64
+	sessionIdClockSequence uint64 = internal.NewRandomUint64()
 )
-
-func init() {
-	sessionIdClockSequence = newRandomUint64()
-}
 
 // 获取 sessionid.
 // 325 天内基本不会重复(实际上更大的跨度也很难重复), 对于 session 而言这个跨度基本满足了.
