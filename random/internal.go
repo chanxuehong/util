@@ -9,8 +9,7 @@ import (
 
 // 全局的 math/rand.Rand.
 //  NOTE:
-//  只有这个全局变量使用 var 初始化, 其他的全局变量都是通过 init() 来初始化,
-//  因为可能依赖 globalMathRand.
+//  使用 var 初始化, 其他直接或简洁依赖readRandomBytes的全局变量都是通过 init() 来初始化.
 var globalMathRand = mathRand.New(mathRand.NewSource(time.Now().UnixNano()))
 
 // 读取随机的字节到 p []byte 里面.
@@ -81,7 +80,7 @@ func readRandomBytes(p []byte) {
 			buf[5] = byte(n >> 16)
 			buf[6] = byte(n >> 8)
 			return
-		default: // len(bufx) > 8
+		default: // len(buf) > 8
 			buf[0] = byte(n >> 56)
 			buf[1] = byte(n >> 48)
 			buf[2] = byte(n >> 40)
