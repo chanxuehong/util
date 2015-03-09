@@ -6,15 +6,15 @@ func Bool(v bool) *bool {
 	return &v
 }
 
-// Int32 is a helper routine that allocates a new int32 value
-// to store v and returns a pointer to it.
-func Int32(v int32) *int32 {
-	return &v
-}
-
 // Int is a helper routine that allocates a new int value
 // to store v and returns a pointer to it.
 func Int(v int) *int {
+	return &v
+}
+
+// Int32 is a helper routine that allocates a new int32 value
+// to store v and returns a pointer to it.
+func Int32(v int32) *int32 {
 	return &v
 }
 
