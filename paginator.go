@@ -27,7 +27,7 @@ func Paginator(totalNum, numPerPage, pageIndex int) ([]int, error) {
 		return nil, errors.New("numPerPage <= 0")
 	}
 	if pageIndex < 0 {
-		return nil, errors.New("pageIndex < 0")
+		return nil, errors.New("pageIndex out of range")
 	}
 
 	// 确定页面数量
@@ -116,4 +116,22 @@ func Paginator(totalNum, numPerPage, pageIndex int) ([]int, error) {
 			}
 		}
 	}
+}
+
+// 获取分页编号序列,序列中非负整数表示页码, -1 表示省略, 如 [1,2,-1,8,9,10,11,12,-1,15,16] 表示 1,2,...8,9,10,11,12,...15,16
+//  totalNum:   总的数量, 不是页面数量, 是所有记录的数量
+//  numPerPage: 每页显示的数量
+//  pageIndex:  当前页码, 注意是从 1 开始编码
+func PaginatorEx(totalNum, numPerPage, pageIndex int) ([]int, error) {
+	pageIndex--
+	arr, err := Paginator(totalNum, numPerPage, pageIndex)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(arr); i++ {
+		if arr[i] != -1 {
+			arr[i]++
+		}
+	}
+	return arr, nil
 }
