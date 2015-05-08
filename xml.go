@@ -7,7 +7,8 @@ import (
 	"io"
 )
 
-// 解析xml, 返回第一级子节点的键值集合, 如果第一级子节点包含有子节点, 则跳过.
+// ParseXMLToMap parse xml, returns to the first-level sub-node key-value,
+// if the first-level sub-node contains child nodes, then skipped.
 func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	if xmlReader == nil {
 		err = errors.New("nil xmlReader")
@@ -18,10 +19,10 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	m = make(map[string]string)
 
 	var (
-		tk    xml.Token    // 当前节点的 xml.Token
-		depth int          // 当前节点的深度
-		key   string       // 当前"第一级"子节点的 key
-		value bytes.Buffer // 当前"第一级"子节点的 value
+		tk    xml.Token
+		depth int // xml.Token depth
+		key   string
+		value bytes.Buffer
 	)
 	for {
 		tk, err = d.Token()
@@ -46,7 +47,7 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 					return
 				}
 				depth--
-				key = "" // key == "" 暗示了当前第一级子节点包含子节点
+				key = "" // key == "" indicates that the node with depth==2 has children
 			default:
 				panic("incorrect algorithm")
 			}
@@ -63,8 +64,9 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	}
 }
 
-// 格式化 map[string]string 为 xml 格式, 根节点名字为 xml.
-//  NOTE: 该函数假定 m map[string]string 里的 key 都是合法的 xml 字符串, 不包含需要转义的字符!
+// FormatMapToXML marshal map[string]string to xml format, the root node name is xml.
+// 	NOTE: This function assumes the key of m map[string]string are legitimate xml name string
+//  that does not contain the required escape character!
 func FormatMapToXML(xmlWriter io.Writer, m map[string]string) (err error) {
 	if xmlWriter == nil {
 		return errors.New("nil xmlWriter")
