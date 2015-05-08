@@ -33,6 +33,8 @@ func TestParseXMLToMap(t *testing.T) {
 				bchara
 				<ba>ba</ba>
 				bchara
+				<bb>bb</bb>
+				bchara
 			</b>
 			<c>c</c>
 		<xml>`,
