@@ -8,7 +8,7 @@ import (
 )
 
 // ParseXMLToMap parses xml and returns the first-level sub-node key-value,
-// if the first-level sub-node contains child nodes, then skipped.
+// if the first-level sub-node contains child nodes, skip it.
 func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	if xmlReader == nil {
 		err = errors.New("nil xmlReader")
@@ -39,7 +39,7 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 			depth++
 			switch depth {
 			case 1:
-			case 2: // 第一级子节点
+			case 2:
 				key = v.Name.Local
 				value.Reset()
 			case 3:
