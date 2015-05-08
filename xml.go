@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-// ParseXMLToMap parses xml and returns the first-level sub-node key-value,
+// ParseXMLToMap parses xml reading from xmlReader and returns the first-level sub-node key-value set,
 // if the first-level sub-node contains child nodes, skip it.
 func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	if xmlReader == nil {
@@ -64,7 +64,7 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	}
 }
 
-// FormatMapToXML marshal map[string]string to xml format, the root node name is xml.
+// FormatMapToXML marshal map[string]string to xmlWriter with xml format, the root node name is xml.
 //  NOTE: This function assumes the key of m map[string]string are legitimate xml name string
 //  that does not contain the required escape character!
 func FormatMapToXML(xmlWriter io.Writer, m map[string]string) (err error) {
