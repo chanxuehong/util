@@ -11,9 +11,9 @@ func TestTrimSpace(t *testing.T) {
 	expectBytes := []byte(expect)
 
 	if dst := TrimSpaceString(src); dst != expect {
-		t.Errorf("TrimSpaceString(%#q):\nhave %#q\nwant %#q\n", src, dst, expect)
+		t.Errorf("TrimSpaceString(%q):\nhave %q\nwant %q\n", src, dst, expect)
 	}
 	if dst := TrimSpace([]byte(src)); !bytes.Equal(dst, expectBytes) {
-		t.Errorf("TrimSpace(%#q):\nhave %#q\nwant %#q\n", src, dst, expectBytes)
+		t.Errorf("TrimSpace(%q):\nhave %q\nwant %q\n", src, dst, expectBytes)
 	}
 }

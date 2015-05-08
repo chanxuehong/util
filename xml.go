@@ -13,21 +13,23 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 		err = errors.New("nil xmlReader")
 		return
 	}
+
 	d := xml.NewDecoder(xmlReader)
-
-	var key string          // 当前"第一级"子节点的 key
-	var buffer bytes.Buffer // 当前"第一级"子节点的 value
-	var depth int           // 当前节点的深度
-
 	m = make(map[string]string)
+
+	var (
+		tk    xml.Token    // 当前节点的 xml.Token
+		depth int          // 当前节点的深度
+		key   string       // 当前"第一级"子节点的 key
+		value bytes.Buffer // 当前"第一级"子节点的 value
+	)
 	for {
-		var tk xml.Token
 		tk, err = d.Token()
 		if err != nil {
-			if err == io.EOF {
-				err = nil
+			if err != io.EOF {
 				return
 			}
+			err = nil
 			return
 		}
 
@@ -35,10 +37,10 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 		case xml.StartElement:
 			depth++
 			switch depth {
-			case 1: // do nothing
-			case 2:
+			case 1:
+			case 2: // 第一级子节点
 				key = v.Name.Local
-				buffer.Reset()
+				value.Reset()
 			case 3:
 				if err = d.Skip(); err != nil {
 					return
@@ -50,11 +52,11 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 			}
 		case xml.CharData:
 			if depth == 2 && key != "" {
-				buffer.Write(v)
+				value.Write(v)
 			}
 		case xml.EndElement:
 			if depth == 2 && key != "" {
-				m[key] = buffer.String()
+				m[key] = value.String()
 			}
 			depth--
 		}
@@ -62,10 +64,12 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 }
 
 // 格式化 map[string]string 为 xml 格式, 根节点名字为 xml.
+//  NOTE: 该函数假定 m map[string]string 里的 key 都是合法的 xml 字符串, 不包含需要转义的字符!
 func FormatMapToXML(xmlWriter io.Writer, m map[string]string) (err error) {
 	if xmlWriter == nil {
 		return errors.New("nil xmlWriter")
 	}
+
 	if _, err = io.WriteString(xmlWriter, "<xml>"); err != nil {
 		return
 	}
