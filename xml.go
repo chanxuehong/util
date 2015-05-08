@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-// ParseXMLToMap parse xml, returns to the first-level sub-node key-value,
+// ParseXMLToMap parses xml and returns the first-level sub-node key-value,
 // if the first-level sub-node contains child nodes, then skipped.
 func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	if xmlReader == nil {
