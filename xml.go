@@ -65,7 +65,7 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 }
 
 // FormatMapToXML marshal map[string]string to xml format, the root node name is xml.
-// 	NOTE: This function assumes the key of m map[string]string are legitimate xml name string
+//  NOTE: This function assumes the key of m map[string]string are legitimate xml name string
 //  that does not contain the required escape character!
 func FormatMapToXML(xmlWriter io.Writer, m map[string]string) (err error) {
 	if xmlWriter == nil {
