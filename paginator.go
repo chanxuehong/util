@@ -117,24 +117,24 @@ func Paginator1(pageNum, pageIndex int) ([]int, error) {
 }
 
 // 获取分页编号序列, 序列中非负整数表示页码, -1 表示省略, 如 [0,1,-1,8,9,10,11,12,-1,15,16] 表示 0,1,...8,9,10,11,12,...15,16
-//  totalNum:   总的记录数量, 不是页面数量
-//  numPerPage: 每页显示的数量
-//  pageIndex:  当前页码, 从 0 开始编码
-func Paginator0Ex(totalNum, numPerPage, pageIndex int) (arr []int, pageNum int, err error) {
+//  totalNum:  总的记录数量, 不是页面数量
+//  pageSize:  每页显示的数量
+//  pageIndex: 当前页码, 从 0 开始编码
+func Paginator0Ex(totalNum, pageSize, pageIndex int) (arr []int, pageNum int, err error) {
 	if totalNum < 0 {
 		err = errors.New("totalNum < 0")
 		return
 	}
-	if numPerPage <= 0 {
-		err = errors.New("numPerPage <= 0")
+	if pageSize <= 0 {
+		err = errors.New("pageSize <= 0")
 		return
 	}
 
 	if totalNum == 0 {
 		pageNum = 1
 	} else { // totalNum > 0
-		pageNum = totalNum / numPerPage
-		if pageNum*numPerPage < totalNum {
+		pageNum = totalNum / pageSize
+		if pageNum*pageSize < totalNum {
 			pageNum++
 		}
 	}
@@ -146,24 +146,24 @@ func Paginator0Ex(totalNum, numPerPage, pageIndex int) (arr []int, pageNum int, 
 }
 
 // 获取分页编号序列, 序列中正整数表示页码, -1 表示省略, 如 [1,2,-1,8,9,10,11,12,-1,15,16] 表示 1,2,...8,9,10,11,12,...15,16
-//  totalNum:   总的记录数量, 不是页面数量
-//  numPerPage: 每页显示的数量
-//  pageIndex:  当前页码, 从 1 开始编码
-func Paginator1Ex(totalNum, numPerPage, pageIndex int) (arr []int, pageNum int, err error) {
+//  totalNum:  总的记录数量, 不是页面数量
+//  pageSize:  每页显示的数量
+//  pageIndex: 当前页码, 从 1 开始编码
+func Paginator1Ex(totalNum, pageSize, pageIndex int) (arr []int, pageNum int, err error) {
 	if totalNum < 0 {
 		err = errors.New("totalNum < 0")
 		return
 	}
-	if numPerPage <= 0 {
-		err = errors.New("numPerPage <= 0")
+	if pageSize <= 0 {
+		err = errors.New("pageSize <= 0")
 		return
 	}
 
 	if totalNum == 0 {
 		pageNum = 1
 	} else { // totalNum > 0
-		pageNum = totalNum / numPerPage
-		if pageNum*numPerPage < totalNum {
+		pageNum = totalNum / pageSize
+		if pageNum*pageSize < totalNum {
 			pageNum++
 		}
 	}
