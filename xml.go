@@ -15,22 +15,20 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 		return
 	}
 
-	d := xml.NewDecoder(xmlReader)
 	m = make(map[string]string)
-
 	var (
+		d     = xml.NewDecoder(xmlReader)
 		tk    xml.Token
-		depth int // xml.Token depth
+		depth = 0 // current xml.Token depth
 		key   string
 		value bytes.Buffer
 	)
 	for {
 		tk, err = d.Token()
 		if err != nil {
-			if err != io.EOF {
-				return
+			if err == io.EOF {
+				err = nil
 			}
-			err = nil
 			return
 		}
 
@@ -38,7 +36,6 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 		case xml.StartElement:
 			depth++
 			switch depth {
-			case 1:
 			case 2:
 				key = v.Name.Local
 				value.Reset()
@@ -48,8 +45,6 @@ func ParseXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 				}
 				depth--
 				key = "" // key == "" indicates that the node with depth==2 has children
-			default:
-				panic("incorrect algorithm")
 			}
 		case xml.CharData:
 			if depth == 2 && key != "" {
