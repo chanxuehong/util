@@ -3,7 +3,6 @@ package id
 import (
 	"crypto/sha1"
 	"encoding/base64"
-	"math/rand"
 	"sync"
 	"time"
 
@@ -11,8 +10,8 @@ import (
 )
 
 const (
-	sessionIdSaltLen            = 39  // see NewSessionId(), 8+8+39 == 55, sha1 签名性能最好的前提下最大的数据块
-	sessionIdSaltUpdateInterval = 300 // seconds
+	sessionIdSaltLen            = 39   // see NewSessionId(), 8+8+39 == 55, sha1 签名性能最好的前提下最大的数据块
+	sessionIdSaltUpdateInterval = 3600 // seconds
 )
 
 var (
@@ -23,7 +22,7 @@ var (
 )
 
 func init() {
-	readRandomBytesFromMathRand(sessionIdSalt, time.Now())
+	random.ReadRandomBytes(sessionIdSalt)
 }
 
 // 获取 sessionid.
@@ -38,7 +37,7 @@ func NewSessionId() (id []byte) {
 	sessionIdMutex.Lock() // Lock
 	if timeNowUnix >= sessionIdSaltLastUpdateTime+sessionIdSaltUpdateInterval {
 		sessionIdSaltLastUpdateTime = timeNowUnix
-		readRandomBytesFromMathRand(sessionIdSalt, timeNow)
+		random.ReadRandomBytes(sessionIdSalt)
 	}
 	sessionIdClockSequence++
 	clockSequence := sessionIdClockSequence
@@ -107,76 +106,4 @@ func NewSessionId() (id []byte) {
 	id = make([]byte, 32)
 	base64.URLEncoding.Encode(id, idx[:])
 	return
-}
-
-var globalMathRand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-func readRandomBytesFromMathRand(p []byte, timeNow time.Time) {
-	timeNowUnixNano := timeNow.UnixNano()
-	for len(p) > 0 {
-		switch n := globalMathRand.Int63() ^ timeNowUnixNano; len(p) {
-		case 8:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			p[3] = byte(n >> 32)
-			p[4] = byte(n >> 24)
-			p[5] = byte(n >> 16)
-			p[6] = byte(n >> 8)
-			p[7] = byte(n)
-			return
-		case 4:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			p[3] = byte(n >> 32)
-			return
-		case 1:
-			p[0] = byte(n >> 56)
-			return
-		case 2:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			return
-		case 3:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			return
-		case 5:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			p[3] = byte(n >> 32)
-			p[4] = byte(n >> 24)
-			return
-		case 6:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			p[3] = byte(n >> 32)
-			p[4] = byte(n >> 24)
-			p[5] = byte(n >> 16)
-			return
-		case 7:
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			p[3] = byte(n >> 32)
-			p[4] = byte(n >> 24)
-			p[5] = byte(n >> 16)
-			p[6] = byte(n >> 8)
-			return
-		default: // len(p) > 8
-			p[0] = byte(n >> 56)
-			p[1] = byte(n >> 48)
-			p[2] = byte(n >> 40)
-			p[3] = byte(n >> 32)
-			p[4] = byte(n >> 24)
-			p[5] = byte(n >> 16)
-			p[6] = byte(n >> 8)
-			p[7] = byte(n)
-			p = p[8:]
-		}
-	}
 }

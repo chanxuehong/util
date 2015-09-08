@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	randomSaltLen            = 45  // see NewRandom(), 8+2+45 == 55, md5 签名性能最好的前提下最大的数据块
-	randomSaltUpdateInterval = 300 // seconds
+	randomSaltLen            = 45   // see NewRandom(), 8+2+45 == 55, md5 签名性能最好的前提下最大的数据块
+	randomSaltUpdateInterval = 3600 // seconds
 )
 
 var (
