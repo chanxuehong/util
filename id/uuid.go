@@ -1,28 +1,29 @@
-package random
+package id
 
 import (
-	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/chanxuehong/util/random/internal"
+	"github.com/chanxuehong/util/random"
 )
 
 const (
-	unixToUUID = 122192928000000000 // 从 1582-10-15T00:00:00 到 1970-01-01T00:00:00 的 100ns 的个数
+	unixToUUID = 122192928000000000 // 从 1582-10-15 00:00:00 +0000 UTC 到 1970-01-01 00:00:00 +0000 UTC 的 100ns 的个数
 )
 
-// 返回 uuid 的时间戳, 从 1582-10-15T00:00:00 到 time.Time 的 100ns 的个数.
+// 返回 uuid 的时间戳, 从 1582-10-15 00:00:00 +0000 UTC 到 t time.Time 的 100ns 的个数.
 func uuid100ns(t time.Time) uint64 {
 	return unix100ns(t) + unixToUUID
 }
 
-var (
-	uuidMutex         sync.Mutex
-	uuidLastTimestamp uint64
-	uuidClockSequence uint32 = internal.NewRandomUint32()
-)
+// 返回 unix 的时间戳, 从 1970-01-01 00:00:00 +0000 UTC 到 t time.Time 的 100ns 的个数.
+func unix100ns(t time.Time) uint64 {
+	return uint64(t.Unix())*10000000 + uint64(t.Nanosecond())/100
+}
 
-// 返回 uuid, Ver1.
+var uuidClockSequence uint32 = random.NewRandomUint32()
+
+// 返回 uuid, ver1.
 //  NOTE: 返回的是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.
 func NewUUIDV1() (uuid [16]byte) {
 	timestamp := uuid100ns(time.Now())
@@ -42,15 +43,8 @@ func NewUUIDV1() (uuid [16]byte) {
 	// set version, 4bits
 	uuid[6] |= 0x10
 
-	uuidMutex.Lock()
-	if timestamp <= uuidLastTimestamp {
-		uuidClockSequence++
-	}
-	seq := uuidClockSequence
-	uuidLastTimestamp = timestamp
-	uuidMutex.Unlock()
-
 	// set clock sequence, 14bits
+	seq := atomic.AddUint32(&uuidClockSequence, 1)
 	uuid[8] = byte(seq>>8) & 0x3F
 	uuid[9] = byte(seq)
 

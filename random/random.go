@@ -1,83 +1,155 @@
 package random
 
 import (
-	"bytes"
-	"crypto/sha1"
-	"net"
-	"os"
+	"crypto/md5"
+	cryptorand "crypto/rand"
+	"encoding/hex"
+	mathrand "math/rand"
+	"sync"
 	"time"
+)
 
-	"github.com/chanxuehong/util/random/internal"
+const (
+	randomSaltLen            = 45  // see NewRandom(), 8+2+45 == 55, md5 签名性能最好的前提下最大的数据块
+	randomSaltUpdateInterval = 300 // seconds
 )
 
 var (
-	// 不同类型的 salt 切片 underlyingSalt 不同的部分,
-	// 定期更新这个 underlyingSalt 来达到更新不同的 salt 的目的;
-	// NOTE: 因为 salt 没有实际意义, 所以无需 lock.
-	underlyingSalt [randomSaltLen + sessionIdSaltLen]byte
-
-	pid            uint16   // 进程号
-	realMAC        [6]byte  // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
-	mac            [6]byte  // realMAC 混淆后的结果
-	macSHA1HashSum [20]byte // mac 的 SHA1 哈希码
+	randomSalt               []byte = make([]byte, randomSaltLen)
+	randomMutex              sync.Mutex
+	randomSaltLastUpdateTime int64  = time.Now().Unix()
+	randomClockSequence      uint32 = NewRandomUint32()
 )
 
 func init() {
-	internal.ReadRandomBytes(underlyingSalt[:]) // 初始化 underlyingSalt
-
-	go func() { // 启动一个 goroutine 定期更新 underlyingSalt
-		tickChan := time.Tick(time.Minute * 5)
-		for {
-			select {
-			case <-tickChan:
-				internal.ReadRandomBytes(underlyingSalt[:])
-			}
-		}
-	}()
-
-	hostname, _ := os.Hostname()
-	if len(hostname) < 2 {
-		hostname = "hostname"
-	}
-	pidMask := uint16(hostname[0])<<8 | uint16(hostname[1])
-	pid = uint16(os.Getpid()) ^ pidMask // 获取 pid 并混淆 pid
-
-	realMAC = getMAC()
-
-	// 获取 mac 并混淆, 请保证集群中所有的混淆要一致!!!
-	mac = realMAC
-	mac[0] ^= 0x12
-	mac[1] ^= 0x34
-	mac[2] ^= 0x56
-	mac[3] ^= 0x78
-	mac[4] ^= 0x9a
-	mac[5] ^= 0xbc
-
-	macSHA1HashSum = sha1.Sum(mac[:])
+	ReadRandomBytes(randomSalt)
 }
 
-var zeroMAC [6]byte
+// NewRandom 返回一个随机字节数组.
+//  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符
+func NewRandom() (ret [16]byte) {
+	timeNow := time.Now()
+	timeNowUnix := timeNow.Unix()
 
-// 获取一个本机的 MAC 地址, 如果没有有效的则用随机数代替.
-func getMAC() (mac [6]byte) {
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		goto GEN_MAC_BY_RAND
+	randomMutex.Lock() // Lock
+	if timeNowUnix >= randomSaltLastUpdateTime+randomSaltUpdateInterval {
+		randomSaltLastUpdateTime = timeNowUnix
+		ReadRandomBytes(randomSalt)
+
+		randomMutex.Unlock() // Unlock
+		copy(ret[:], randomSalt)
+		return
+	}
+	randomClockSequence++
+	clockSequence := randomClockSequence
+	randomMutex.Unlock() // Unlock
+
+	var src [8 + 2 + randomSaltLen]byte // 8+2+45 == 55
+	timeNowUnixNano := timeNow.UnixNano()
+	src[0] = byte(timeNowUnixNano >> 56)
+	src[1] = byte(timeNowUnixNano >> 48)
+	src[2] = byte(timeNowUnixNano >> 40)
+	src[3] = byte(timeNowUnixNano >> 32)
+	src[4] = byte(timeNowUnixNano >> 24)
+	src[5] = byte(timeNowUnixNano >> 16)
+	src[6] = byte(timeNowUnixNano >> 8)
+	src[7] = byte(timeNowUnixNano)
+	src[8] = byte(clockSequence >> 8)
+	src[9] = byte(clockSequence)
+	copy(src[10:], randomSalt)
+
+	ret = md5.Sum(src[:])
+	return
+}
+
+// NewRandomEx 返回一个32字节的随机数.
+//  NOTE: 返回的结果经过了 hex 编码.
+func NewRandomEx() (ret []byte) {
+	rd := NewRandom()
+	ret = make([]byte, hex.EncodedLen(len(rd)))
+	hex.Encode(ret, rd[:])
+	return
+}
+
+var globalMathRand = mathrand.New(mathrand.NewSource(time.Now().UnixNano()))
+
+// 读取随机字节到 p []byte 里面.
+func ReadRandomBytes(p []byte) {
+	if len(p) <= 0 {
+		return
 	}
 
-	for _, itf := range interfaces {
-		if itf.Flags&net.FlagUp == net.FlagUp && // 接口是 up 的
-			itf.Flags&net.FlagLoopback == 0 && // 接口不是 loopback
-			len(itf.HardwareAddr) == 6 && // IEEE MAC-48, EUI-48
-			!bytes.Equal(itf.HardwareAddr, zeroMAC[:]) /* 不是全0的MAC */ {
+	// get from crypto/rand
+	if _, err := cryptorand.Read(p); err == nil {
+		return
+	}
 
-			copy(mac[:], itf.HardwareAddr)
+	// get from math/rand
+	timeNowUnixNano := time.Now().UnixNano()
+	for len(p) > 0 {
+		switch n := globalMathRand.Int63() ^ timeNowUnixNano; len(p) {
+		case 8:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			p[3] = byte(n >> 32)
+			p[4] = byte(n >> 24)
+			p[5] = byte(n >> 16)
+			p[6] = byte(n >> 8)
+			p[7] = byte(n)
 			return
+		case 4:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			p[3] = byte(n >> 32)
+			return
+		case 1:
+			p[0] = byte(n >> 56)
+			return
+		case 2:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			return
+		case 3:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			return
+		case 5:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			p[3] = byte(n >> 32)
+			p[4] = byte(n >> 24)
+			return
+		case 6:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			p[3] = byte(n >> 32)
+			p[4] = byte(n >> 24)
+			p[5] = byte(n >> 16)
+			return
+		case 7:
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			p[3] = byte(n >> 32)
+			p[4] = byte(n >> 24)
+			p[5] = byte(n >> 16)
+			p[6] = byte(n >> 8)
+			return
+		default: // len(p) > 8
+			p[0] = byte(n >> 56)
+			p[1] = byte(n >> 48)
+			p[2] = byte(n >> 40)
+			p[3] = byte(n >> 32)
+			p[4] = byte(n >> 24)
+			p[5] = byte(n >> 16)
+			p[6] = byte(n >> 8)
+			p[7] = byte(n)
+			p = p[8:]
 		}
 	}
-
-GEN_MAC_BY_RAND:
-	internal.ReadRandomBytes(mac[:])
-	mac[0] |= 0x01 // 设置多播标志, 以区分正常的 MAC
-	return
 }
