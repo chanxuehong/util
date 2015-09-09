@@ -22,9 +22,7 @@ func tillNextMillis(lastTimestamp int64) int64 {
 	return timestamp
 }
 
-const (
-	objectIdSequenceMask = 0x3fff // 14bits
-)
+const objectIdSequenceMask = 0x3fff // 14bits
 
 var (
 	objectIdMutex    sync.Mutex
@@ -78,7 +76,7 @@ func NewObjectId() (id [12]byte, err error) {
 	id[5] = byte(timestamp << 6)
 
 	// 写入 sequence 的高 6 位
-	id[5] |= byte((objectIdSequence >> 8) & 0x3f)
+	id[5] |= byte(objectIdSequence>>8) & 0x3f
 
 	// 写入 24bits mac hashsum
 	copy(id[6:], macHashSum[:3])
