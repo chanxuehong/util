@@ -39,7 +39,7 @@ func init() {
 	objectIdFirstSequence = objectIdSequence
 }
 
-// 获取一个不重复的 id (和 mongodb 的 objectid 算法类似, 不完全一致).
+// 获取一个不重复的 id (每毫秒可以产生 16384 个 id, 和 mongodb 的 objectid 算法类似, 不完全一致).
 //  NOTE:
 //  1. 从 2010-01-01 00:00:00 +0000 UTC 到 2149-05-15 07:35:11.104 +0000 UTC 时间段内生成的 id 是升序且不重复的.
 //  2. 返回的 id 是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符,

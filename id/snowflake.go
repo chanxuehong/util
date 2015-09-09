@@ -39,7 +39,7 @@ func SetSnowflakeWorkerId(workerId int) (err error) {
 	return
 }
 
-// 获取一个不重复的 id (snowflake, 纪元不一样).
+// 获取一个不重复的 id (每毫秒可以产生 4096 个 id,snowflake, 纪元不一样).
 //  NOTE:
 //  1. 从 2010-01-01 00:00:00 +0000 UTC 到 2079-09-07 15:47:35.552 +0000 UTC 时间段内生成的 id 是升序且不重复的.
 //  2. 这个 id 适合在自己的系统内部用, 如果想要给外部用最要用 uuid.ver1.
