@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	realMAC        [6]byte  // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
-	fakeMAC        [6]byte  // 混淆后的 MAC
-	macSHA1HashSum [20]byte // realMAC 的 SHA1 哈希码
+	realMAC    [6]byte  // 本机的某一个网卡的 MAC 地址, 如果没有则取随机数
+	fakeMAC    [6]byte  // 混淆后的 MAC
+	macHashSum [20]byte // realMAC 的 SHA1 哈希码
 
 	pid uint16 // 进程号
 )
@@ -29,7 +29,7 @@ func init() {
 	fakeMAC[4] ^= 0x9a
 	fakeMAC[5] ^= 0xbc
 
-	macSHA1HashSum = sha1.Sum(realMAC[:])
+	macHashSum = sha1.Sum(realMAC[:])
 
 	pid = uint16(os.Getpid()) ^ 0x7788 // 保证集群中所有的混淆要一致!!!
 }

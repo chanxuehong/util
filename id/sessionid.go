@@ -18,7 +18,7 @@ var (
 	sessionIdSalt               []byte = make([]byte, sessionIdSaltLen)
 	sessionIdMutex              sync.Mutex
 	sessionIdSaltLastUpdateTime int64  = time.Now().Unix()
-	sessionIdClockSequence      uint64 = random.NewRandomUint64()
+	sessionIdSequence           uint64 = random.NewRandomUint64()
 )
 
 func init() {
@@ -39,11 +39,11 @@ func NewSessionId() (id []byte) {
 		sessionIdSaltLastUpdateTime = timeNowUnix
 		random.ReadRandomBytes(sessionIdSalt)
 	}
-	sessionIdClockSequence++
-	clockSequence := sessionIdClockSequence
+	sessionIdSequence++
+	sequence := sessionIdSequence
 	sessionIdMutex.Unlock() // Unlock
 
-	// 48bits unix100ns + 48bits mac + 16bits pid + 16bits clock sequence + 64bits SHA1 sum
+	// 48bits unix100ns + 48bits mac + 16bits pid + 16bits sequence + 64bits SHA1 sum
 	var idx [24]byte
 
 	// 写入 unix100ns 低 48 bit, 这样跨度 325 天不会重复
@@ -61,9 +61,9 @@ func NewSessionId() (id []byte) {
 	idx[12] = byte(pid >> 8)
 	idx[13] = byte(pid)
 
-	// 写入 16bit clock sequence, 这样 100 纳秒内 65536 个操作都不会重复
-	idx[14] = byte(clockSequence >> 8)
-	idx[15] = byte(clockSequence)
+	// 写入 16bit sequence, 这样 100 纳秒内 65536 个操作都不会重复
+	idx[14] = byte(sequence >> 8)
+	idx[15] = byte(sequence)
 
 	// 写入 64bits hashsum, 让 sessionid 猜测的难度增加, 一定程度也能提高唯一性的概率;
 	// 特别是 timestamp 轮回325天后出现 timestamp 的低48位 + seq 的低16位和以前的某个时刻刚好相等,
@@ -81,14 +81,14 @@ func NewSessionId() (id []byte) {
 	src[6] = byte(timestamp>>8) ^ sessionIdSalt[4]
 	src[7] = byte(timestamp) ^ sessionIdSalt[5]
 
-	src[8] = byte(clockSequence >> 56)
-	src[9] = byte(clockSequence >> 48)
-	src[10] = byte(clockSequence >> 40)
-	src[11] = byte(clockSequence >> 32)
-	src[12] = byte(clockSequence >> 24)
-	src[13] = byte(clockSequence >> 16)
-	src[14] = byte(clockSequence>>8) ^ sessionIdSalt[6]
-	src[15] = byte(clockSequence) ^ sessionIdSalt[7]
+	src[8] = byte(sequence >> 56)
+	src[9] = byte(sequence >> 48)
+	src[10] = byte(sequence >> 40)
+	src[11] = byte(sequence >> 32)
+	src[12] = byte(sequence >> 24)
+	src[13] = byte(sequence >> 16)
+	src[14] = byte(sequence>>8) ^ sessionIdSalt[6]
+	src[15] = byte(sequence) ^ sessionIdSalt[7]
 
 	copy(src[16:], sessionIdSalt)
 

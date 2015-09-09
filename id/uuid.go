@@ -21,7 +21,7 @@ func unix100ns(t time.Time) uint64 {
 	return uint64(t.Unix())*10000000 + uint64(t.Nanosecond())/100
 }
 
-var uuidClockSequence uint32 = random.NewRandomUint32()
+var uuidSequence uint32 = random.NewRandomUint32()
 
 // 返回 uuid, ver1.
 //  NOTE: 返回的是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.
@@ -43,8 +43,8 @@ func NewUUIDV1() (uuid [16]byte) {
 	// set version, 4bits
 	uuid[6] |= 0x10
 
-	// set clock sequence, 14bits
-	seq := atomic.AddUint32(&uuidClockSequence, 1)
+	// set sequence, 14bits
+	seq := atomic.AddUint32(&uuidSequence, 1)
 	uuid[8] = byte(seq>>8) & 0x3F
 	uuid[9] = byte(seq)
 
