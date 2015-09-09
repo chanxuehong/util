@@ -36,7 +36,6 @@ var (
 
 func init() {
 	objectIdSequence = random.NewRandomUint32() & objectIdSequenceMask
-	objectIdFirstSequence = objectIdSequence
 }
 
 // 获取一个不重复的 id (每毫秒可以产生 16384 个 id, 和 mongodb 的 objectid 算法类似, 不完全一致).
@@ -63,6 +62,7 @@ func NewObjectId() (id [12]byte, err error) {
 		return
 	}
 	objectIdLastTimestamp = timestamp
+	sequence := objectIdSequence
 	objectIdMutex.Unlock() // Unlock
 
 	// 42bits timestamp + 6bits higher sequence + 24bits mac hashsum + 16bits pid + 8bits lower sequence
@@ -76,7 +76,7 @@ func NewObjectId() (id [12]byte, err error) {
 	id[5] = byte(timestamp << 6)
 
 	// 写入 sequence 的高 6 位
-	id[5] |= byte(objectIdSequence>>8) & 0x3f
+	id[5] |= byte(sequence>>8) & 0x3f
 
 	// 写入 24bits mac hashsum
 	copy(id[6:], macHashSum[:3])
@@ -87,6 +87,6 @@ func NewObjectId() (id [12]byte, err error) {
 
 	// 写入 sequence 的低 8 位,
 	// 加上前面的高 6 位, 这样就是 1 毫秒内可以产生 16384 个 id
-	id[11] = byte(objectIdSequence)
+	id[11] = byte(sequence)
 	return
 }

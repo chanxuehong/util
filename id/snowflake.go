@@ -25,7 +25,6 @@ var (
 
 func init() {
 	snowflakeSequence = random.NewRandomUint32() & snowflakeSequenceMask
-	snowflakeFirstSequence = snowflakeSequence
 }
 
 // 设置 snowflake worker Id, [0, 1024).
@@ -65,10 +64,11 @@ func NewSnowflakeId() (id int64, err error) {
 		return
 	}
 	snowflakeLastTimestamp = timestamp
+	sequence := snowflakeSequence
 	snowflakeMutex.Unlock() // Unlock
 
 	// 0(1bit) + 41bits timestamp + 10bits worker id + 12bits sequence
-	id = timestamp<<22 | snowflakeWorkerId<<12 | int64(snowflakeSequence)
+	id = timestamp<<22 | snowflakeWorkerId<<12 | int64(sequence)
 	id &= 0x7fffffffffffffff
 	return
 }

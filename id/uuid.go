@@ -20,8 +20,8 @@ func unix100ns(t time.Time) int64 {
 	return t.Unix()*10000000 + int64(t.Nanosecond())/100
 }
 
-// tillNext100ns spin wait till next 100 nanosecond.
-func tillNext100ns(lastTimestamp int64) int64 {
+// uuidTillNext100ns spin wait till next 100 nanosecond.
+func uuidTillNext100ns(lastTimestamp int64) int64 {
 	timestamp := uuid100ns(time.Now())
 	for timestamp <= lastTimestamp {
 		timestamp = uuid100ns(time.Now())
@@ -43,7 +43,6 @@ var (
 
 func init() {
 	uuidSequence = random.NewRandomUint32() & uuidSequenceMask
-	uuidFirstSequence = uuidSequence
 }
 
 // 返回 uuid, ver1.
@@ -58,7 +57,7 @@ func NewUUIDV1() (uuid [16]byte, err error) {
 	case timestamp == uuidLastTimestamp:
 		uuidSequence = (uuidSequence + 1) & uuidSequenceMask
 		if uuidSequence == uuidFirstSequence {
-			timestamp = tillNext100ns(timestamp)
+			timestamp = uuidTillNext100ns(timestamp)
 		}
 	default:
 		uuidMutex.Unlock() // Unlock
@@ -66,6 +65,7 @@ func NewUUIDV1() (uuid [16]byte, err error) {
 		return
 	}
 	uuidLastTimestamp = timestamp
+	sequence := uuidSequence
 	uuidMutex.Unlock() // Unlock
 
 	// set timestamp, 60bits
@@ -84,8 +84,8 @@ func NewUUIDV1() (uuid [16]byte, err error) {
 	uuid[6] |= 0x10
 
 	// set sequence, 14bits
-	uuid[8] = byte(uuidSequence>>8) & 0x3F
-	uuid[9] = byte(uuidSequence)
+	uuid[8] = byte(sequence>>8) & 0x3F
+	uuid[9] = byte(sequence)
 
 	// set variant
 	uuid[8] |= 0x80
