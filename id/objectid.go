@@ -26,7 +26,7 @@ const objectIdSequenceMask = 0x3fff // 14bits
 
 var (
 	objectIdMutex    sync.Mutex
-	objectIdSequence uint32
+	objectIdSequence uint32 = random.NewRandomUint32() & objectIdSequenceMask
 	// 最近的时间戳的第一个 sequence.
 	// 对于同一个时间戳, 如果 objectIdSequence 再次等于 objectIdFirstSequence,
 	// 表示达到了上限了, 需要等到下一个时间戳了.
@@ -34,16 +34,12 @@ var (
 	objectIdLastTimestamp int64
 )
 
-func init() {
-	objectIdSequence = random.NewRandomUint32() & objectIdSequenceMask
-}
-
 // 获取一个不重复的 id (每毫秒可以产生 16384 个 id, 和 mongodb 的 objectid 算法类似, 不完全一致).
 //  NOTE:
 //  1. 从 2010-01-01 00:00:00 +0000 UTC 到 2149-05-15 07:35:11.104 +0000 UTC 时间段内生成的 id 是升序且不重复的.
 //  2. 返回的 id 是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符,
 //  3. 特别的, id 的 url_base64 编码不包含等号(=), 只有 1-9,a-z,A-Z,-,_ 字符.
-//  4. 这个 id 适合在自己的系统内部用, 如果想要给外部用最要用 uuid.ver1.
+//  4. 这个 id 适合在自己的系统内部用, 否则最好用 uuid.ver1.
 func NewObjectId() (id [12]byte, err error) {
 	timestamp := idtimestamp(time.Now())
 

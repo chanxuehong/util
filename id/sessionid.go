@@ -23,17 +23,13 @@ var (
 	sessionIdMutex                   sync.Mutex
 	sessionIdSaltLastUpdateTimestamp int64
 
-	sessionIdSequence uint64
+	sessionIdSequence uint64 = random.NewRandomUint64()
 	// 最近的时间戳的第一个 sequence.
 	// 对于同一个时间戳, 如果 sessionIdSequence 再次等于 sessionIdFirstSequence,
 	// 表示达到了上限了, 需要等到下一个时间戳了.
 	sessionIdFirstSequence uint64
 	sessionIdLastTimestamp int64
 )
-
-func init() {
-	sessionIdSequence = random.NewRandomUint64()
-}
 
 // sessionIdTillNext100ns spin wait till next 100 nanosecond.
 func sessionIdTillNext100ns(lastTimestamp int64) int64 {

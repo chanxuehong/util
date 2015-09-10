@@ -33,17 +33,13 @@ const uuidSequenceMask = 0x3fff // 14bits
 
 var (
 	uuidMutex    sync.Mutex
-	uuidSequence uint32
+	uuidSequence uint32 = random.NewRandomUint32() & uuidSequenceMask
 	// 最近的时间戳的第一个 sequence.
 	// 对于同一个时间戳, 如果 uuidSequence 再次等于 uuidFirstSequence,
 	// 表示达到了上限了, 需要等到下一个时间戳了.
 	uuidFirstSequence uint32
 	uuidLastTimestamp int64
 )
-
-func init() {
-	uuidSequence = random.NewRandomUint32() & uuidSequenceMask
-}
 
 // 返回 uuid, ver1.
 //  NOTE: 返回的是原始字节数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符.

@@ -15,15 +15,12 @@ const (
 )
 
 var (
-	randomSalt               []byte = make([]byte, randomSaltLen)
+	randomSalt = make([]byte, randomSaltLen)
+
 	randomMutex              sync.Mutex
-	randomSaltLastUpdateTime int64  = time.Now().Unix()
+	randomSaltLastUpdateTime int64  = -randomSaltUpdateInterval
 	randomClockSequence      uint32 = NewRandomUint32()
 )
-
-func init() {
-	ReadRandomBytes(randomSalt)
-}
 
 // NewRandom 返回一个随机字节数组.
 //  NOTE: 返回的是原始数组, 不是可显示字符, 可以通过 hex, url_base64 等转换为可显示字符
@@ -41,7 +38,7 @@ func NewRandom() (ret [16]byte) {
 		return
 	}
 	randomClockSequence++
-	clockSequence := randomClockSequence
+	sequence := randomClockSequence
 	randomMutex.Unlock() // Unlock
 
 	var src [8 + 2 + randomSaltLen]byte // 8+2+45 == 55
@@ -54,8 +51,8 @@ func NewRandom() (ret [16]byte) {
 	src[5] = byte(timeNowUnixNano >> 16)
 	src[6] = byte(timeNowUnixNano >> 8)
 	src[7] = byte(timeNowUnixNano)
-	src[8] = byte(clockSequence >> 8)
-	src[9] = byte(clockSequence)
+	src[8] = byte(sequence >> 8)
+	src[9] = byte(sequence)
 	copy(src[10:], randomSalt)
 
 	ret = md5.Sum(src[:])
