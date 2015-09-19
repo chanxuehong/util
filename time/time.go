@@ -13,6 +13,46 @@ type Time struct {
 	time.Time
 }
 
+func Date(year int, month time.Month, day, hour, min, sec, nsec int, loc *time.Location) Time {
+	return Time{
+		Time: time.Date(year, month, day, hour, min, sec, nsec, loc),
+	}
+}
+
+func Now() Time {
+	return Time{
+		Time: time.Now(),
+	}
+}
+
+func Parse(layout, value string) (t Time, err error) {
+	tt, err := time.Parse(layout, value)
+	if err != nil {
+		return
+	}
+	t = Time{
+		Time: tt,
+	}
+	return
+}
+
+func ParseInLocation(layout, value string, loc *time.Location) (t Time, err error) {
+	tt, err := time.ParseInLocation(layout, value, loc)
+	if err != nil {
+		return
+	}
+	t = Time{
+		Time: tt,
+	}
+	return
+}
+
+func Unix(sec int64, nsec int64) Time {
+	return Time{
+		Time: time.Unix(sec, nsec),
+	}
+}
+
 func (t Time) Value() (value driver.Value, err error) {
 	value = t.Unix()
 	return
