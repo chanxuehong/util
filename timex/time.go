@@ -1,4 +1,4 @@
-package time
+package timex
 
 import (
 	"database/sql/driver"

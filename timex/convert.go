@@ -6,7 +6,7 @@
 
 // *** copy from database/sql ***
 
-package time
+package timex
 
 import (
 	"database/sql"
