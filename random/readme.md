@@ -1,1 +1,1 @@
-### id 系列函数移动到了 github.com/chanxuehong/util/id 包里去了
+### moved to https://github.com/chanxuehong/rand
