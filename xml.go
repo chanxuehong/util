@@ -61,24 +61,24 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 	switch v := w.(type) {
 	case *bytes.Buffer:
 		bufw := v
-		if _, err = bufw.WriteString("<"); err != nil {
+		if err = bufw.WriteByte('<'); err != nil {
 			return
 		}
 		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(">"); err != nil {
+		if err = bufw.WriteByte('>'); err != nil {
 			return
 		}
 
 		for k, v := range m {
-			if _, err = bufw.WriteString("<"); err != nil {
+			if err = bufw.WriteByte('<'); err != nil {
 				return
 			}
 			if _, err = bufw.WriteString(k); err != nil {
 				return
 			}
-			if _, err = bufw.WriteString(">"); err != nil {
+			if err = bufw.WriteByte('>'); err != nil {
 				return
 			}
 
@@ -92,7 +92,7 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 			if _, err = bufw.WriteString(k); err != nil {
 				return
 			}
-			if _, err = bufw.WriteString(">"); err != nil {
+			if err = bufw.WriteByte('>'); err != nil {
 				return
 			}
 		}
@@ -103,31 +103,31 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(">"); err != nil {
+		if err = bufw.WriteByte('>'); err != nil {
 			return
 		}
 		return nil
 
 	case *bufio.Writer:
 		bufw := v
-		if _, err = bufw.WriteString("<"); err != nil {
+		if err = bufw.WriteByte('<'); err != nil {
 			return
 		}
 		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(">"); err != nil {
+		if err = bufw.WriteByte('>'); err != nil {
 			return
 		}
 
 		for k, v := range m {
-			if _, err = bufw.WriteString("<"); err != nil {
+			if err = bufw.WriteByte('<'); err != nil {
 				return
 			}
 			if _, err = bufw.WriteString(k); err != nil {
 				return
 			}
-			if _, err = bufw.WriteString(">"); err != nil {
+			if err = bufw.WriteByte('>'); err != nil {
 				return
 			}
 
@@ -141,7 +141,7 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 			if _, err = bufw.WriteString(k); err != nil {
 				return
 			}
-			if _, err = bufw.WriteString(">"); err != nil {
+			if err = bufw.WriteByte('>'); err != nil {
 				return
 			}
 		}
@@ -152,31 +152,31 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(">"); err != nil {
+		if err = bufw.WriteByte('>'); err != nil {
 			return
 		}
 		return bufw.Flush()
 
 	default:
 		bufw := bufio.NewWriterSize(w, 256)
-		if _, err = bufw.WriteString("<"); err != nil {
+		if err = bufw.WriteByte('<'); err != nil {
 			return
 		}
 		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(">"); err != nil {
+		if err = bufw.WriteByte('>'); err != nil {
 			return
 		}
 
 		for k, v := range m {
-			if _, err = bufw.WriteString("<"); err != nil {
+			if err = bufw.WriteByte('<'); err != nil {
 				return
 			}
 			if _, err = bufw.WriteString(k); err != nil {
 				return
 			}
-			if _, err = bufw.WriteString(">"); err != nil {
+			if err = bufw.WriteByte('>'); err != nil {
 				return
 			}
 
@@ -190,7 +190,7 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 			if _, err = bufw.WriteString(k); err != nil {
 				return
 			}
-			if _, err = bufw.WriteString(">"); err != nil {
+			if err = bufw.WriteByte('>'); err != nil {
 				return
 			}
 		}
@@ -201,7 +201,7 @@ func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err er
 		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(">"); err != nil {
+		if err = bufw.WriteByte('>'); err != nil {
 			return
 		}
 		return bufw.Flush()
