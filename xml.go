@@ -58,53 +58,152 @@ func DecodeXMLToMap(r io.Reader) (m map[string]string, err error) {
 //  NOTE: This function requires the rootname argument and the keys of m (type map[string]string) argument
 //  are legitimate xml name string that does not contain the required escape character!
 func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err error) {
-	bufw := bufio.NewWriterSize(w, 256)
-
-	if _, err = bufw.WriteString("<"); err != nil {
-		return
-	}
-	if _, err = bufw.WriteString(rootname); err != nil {
-		return
-	}
-	if _, err = bufw.WriteString(">"); err != nil {
-		return
-	}
-
-	for k, v := range m {
+	switch v := w.(type) {
+	case *bytes.Buffer:
+		bufw := v
 		if _, err = bufw.WriteString("<"); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(k); err != nil {
+		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
 		if _, err = bufw.WriteString(">"); err != nil {
 			return
 		}
 
-		if err = xml.EscapeText(bufw, []byte(v)); err != nil {
-			return
+		for k, v := range m {
+			if _, err = bufw.WriteString("<"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(">"); err != nil {
+				return
+			}
+
+			if err = xml.EscapeText(bufw, []byte(v)); err != nil {
+				return
+			}
+
+			if _, err = bufw.WriteString("</"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(">"); err != nil {
+				return
+			}
 		}
 
 		if _, err = bufw.WriteString("</"); err != nil {
 			return
 		}
-		if _, err = bufw.WriteString(k); err != nil {
+		if _, err = bufw.WriteString(rootname); err != nil {
 			return
 		}
 		if _, err = bufw.WriteString(">"); err != nil {
 			return
 		}
-	}
+		return nil
 
-	if _, err = bufw.WriteString("</"); err != nil {
-		return
-	}
-	if _, err = bufw.WriteString(rootname); err != nil {
-		return
-	}
-	if _, err = bufw.WriteString(">"); err != nil {
-		return
-	}
+	case *bufio.Writer:
+		bufw := v
+		if _, err = bufw.WriteString("<"); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(rootname); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(">"); err != nil {
+			return
+		}
 
-	return bufw.Flush()
+		for k, v := range m {
+			if _, err = bufw.WriteString("<"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(">"); err != nil {
+				return
+			}
+
+			if err = xml.EscapeText(bufw, []byte(v)); err != nil {
+				return
+			}
+
+			if _, err = bufw.WriteString("</"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(">"); err != nil {
+				return
+			}
+		}
+
+		if _, err = bufw.WriteString("</"); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(rootname); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(">"); err != nil {
+			return
+		}
+		return bufw.Flush()
+
+	default:
+		bufw := bufio.NewWriterSize(w, 256)
+		if _, err = bufw.WriteString("<"); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(rootname); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(">"); err != nil {
+			return
+		}
+
+		for k, v := range m {
+			if _, err = bufw.WriteString("<"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(">"); err != nil {
+				return
+			}
+
+			if err = xml.EscapeText(bufw, []byte(v)); err != nil {
+				return
+			}
+
+			if _, err = bufw.WriteString("</"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(">"); err != nil {
+				return
+			}
+		}
+
+		if _, err = bufw.WriteString("</"); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(rootname); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(">"); err != nil {
+			return
+		}
+		return bufw.Flush()
+	}
 }
