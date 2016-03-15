@@ -1,24 +1,25 @@
 package util
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/xml"
 	"io"
 )
 
-// DecodeXMLToMap decodes xml reading from xmlReader and returns the first-level sub-node key-value set,
+// DecodeXMLToMap decodes xml reading from io.Reader and returns the first-level sub-node key-value set,
 // if the first-level sub-node contains child nodes, skip it.
-func DecodeXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
+func DecodeXMLToMap(r io.Reader) (m map[string]string, err error) {
 	m = make(map[string]string)
 	var (
-		d     = xml.NewDecoder(xmlReader)
-		tk    xml.Token
-		depth = 0 // current xml.Token depth
-		key   string
-		value bytes.Buffer
+		decoder = xml.NewDecoder(r)
+		depth   = 0
+		token   xml.Token
+		key     string
+		value   bytes.Buffer
 	)
 	for {
-		tk, err = d.Token()
+		token, err = decoder.Token()
 		if err != nil {
 			if err == io.EOF {
 				err = nil
@@ -26,7 +27,7 @@ func DecodeXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 			return
 		}
 
-		switch v := tk.(type) {
+		switch v := token.(type) {
 		case xml.StartElement:
 			depth++
 			switch depth {
@@ -34,7 +35,7 @@ func DecodeXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 				key = v.Name.Local
 				value.Reset()
 			case 3:
-				if err = d.Skip(); err != nil {
+				if err = decoder.Skip(); err != nil {
 					return
 				}
 				depth--
@@ -53,28 +54,57 @@ func DecodeXMLToMap(xmlReader io.Reader) (m map[string]string, err error) {
 	}
 }
 
-// EncodeXMLFromMap encodes map[string]string to xmlWriter with xml format, the root node name is xml.
-//  NOTE: This function assumes the key of m map[string]string are legitimate xml name string
-//  that does not contain the required escape character!
-func EncodeXMLFromMap(xmlWriter io.Writer, m map[string]string) (err error) {
-	if _, err = io.WriteString(xmlWriter, "<xml>"); err != nil {
+// EncodeXMLFromMap encodes map[string]string to io.Writer with xml format.
+//  NOTE: This function requires the rootname argument and the keys of m (type map[string]string) argument
+//  are legitimate xml name string that does not contain the required escape character!
+func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err error) {
+	bufw := bufio.NewWriterSize(w, 256)
+
+	if _, err = bufw.WriteString("<"); err != nil {
+		return
+	}
+	if _, err = bufw.WriteString(rootname); err != nil {
+		return
+	}
+	if _, err = bufw.WriteString(">"); err != nil {
 		return
 	}
 
 	for k, v := range m {
-		if _, err = io.WriteString(xmlWriter, "<"+k+">"); err != nil {
+		if _, err = bufw.WriteString("<"); err != nil {
 			return
 		}
-		if err = xml.EscapeText(xmlWriter, []byte(v)); err != nil {
+		if _, err = bufw.WriteString(k); err != nil {
 			return
 		}
-		if _, err = io.WriteString(xmlWriter, "</"+k+">"); err != nil {
+		if _, err = bufw.WriteString(">"); err != nil {
+			return
+		}
+
+		if err = xml.EscapeText(bufw, []byte(v)); err != nil {
+			return
+		}
+
+		if _, err = bufw.WriteString("</"); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(k); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(">"); err != nil {
 			return
 		}
 	}
 
-	if _, err = io.WriteString(xmlWriter, "</xml>"); err != nil {
+	if _, err = bufw.WriteString("</"); err != nil {
 		return
 	}
-	return
+	if _, err = bufw.WriteString(rootname); err != nil {
+		return
+	}
+	if _, err = bufw.WriteString(">"); err != nil {
+		return
+	}
+
+	return bufw.Flush()
 }

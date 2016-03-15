@@ -7,7 +7,7 @@ import (
 )
 
 func TestDecodeXMLToMap(t *testing.T) {
-	var xmlSrc = []string{
+	var xmlArr = []string{
 		`<xml>
 			<a>a</a>
 			<b>b</b>
@@ -49,7 +49,7 @@ func TestDecodeXMLToMap(t *testing.T) {
 		</xml>`,
 	}
 
-	var mapWant = []map[string]string{
+	var mapArr = []map[string]string{
 		{
 			"a": "a",
 			"b": "b",
@@ -72,14 +72,14 @@ func TestDecodeXMLToMap(t *testing.T) {
 		},
 	}
 
-	for i, src := range xmlSrc {
+	for i, src := range xmlArr {
 		m, err := DecodeXMLToMap(strings.NewReader(src))
 		if err != nil {
-			t.Errorf("DecodeXMLToMap(%s):\nError: %s\n", src, err.Error())
+			t.Errorf("DecodeXMLToMap(%s) failed: %s\n", src, err.Error())
 			continue
 		}
-		if !reflect.DeepEqual(m, mapWant[i]) {
-			t.Errorf("DecodeXMLToMap(%s):\nhave %v\nwant %v\n", src, m, mapWant[i])
+		if !reflect.DeepEqual(m, mapArr[i]) {
+			t.Errorf("DecodeXMLToMap(%s) failed:\nhave %+v\nwant %+v\n", src, m, mapArr[i])
 			continue
 		}
 	}
