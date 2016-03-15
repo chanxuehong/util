@@ -6,19 +6,19 @@ import (
 	"testing"
 )
 
-func TestParseXMLToMap(t *testing.T) {
+func TestDecodeXMLToMap(t *testing.T) {
 	var xmlSrc = []string{
 		`<xml>
 			<a>a</a>
 			<b>b</b>
-		<xml>`,
+		</xml>`,
 		`<xml>
 			<a>a</a>
 			<b>
 				<ba>ba</ba>
 			</b>
 			<c>c</c>
-		<xml>`,
+		</xml>`,
 		`<xml>
 			<a>a</a>
 			<b>
@@ -26,7 +26,7 @@ func TestParseXMLToMap(t *testing.T) {
 				<ba>ba</ba>
 			</b>
 			<c>c</c>
-		<xml>`,
+		</xml>`,
 		`<xml>
 			<a>a</a>
 			<b>
@@ -37,7 +37,7 @@ func TestParseXMLToMap(t *testing.T) {
 				bchara
 			</b>
 			<c>c</c>
-		<xml>`,
+		</xml>`,
 		`<xml>
 			chara
 			<a>a</a>
@@ -46,7 +46,7 @@ func TestParseXMLToMap(t *testing.T) {
 				bchara
 			</b>
 			<c>c</c>
-		<xml>`,
+		</xml>`,
 	}
 
 	var mapWant = []map[string]string{
@@ -73,13 +73,13 @@ func TestParseXMLToMap(t *testing.T) {
 	}
 
 	for i, src := range xmlSrc {
-		m, err := ParseXMLToMap(strings.NewReader(src))
+		m, err := DecodeXMLToMap(strings.NewReader(src))
 		if err != nil {
-			t.Errorf("ParseXMLToMap(%s):\nError: %s\n", src, err.Error())
+			t.Errorf("DecodeXMLToMap(%s):\nError: %s\n", src, err.Error())
 			continue
 		}
 		if !reflect.DeepEqual(m, mapWant[i]) {
-			t.Errorf("ParseXMLToMap(%s):\nhave %v\nwant %v\n", src, m, mapWant[i])
+			t.Errorf("DecodeXMLToMap(%s):\nhave %v\nwant %v\n", src, m, mapWant[i])
 			continue
 		}
 	}
