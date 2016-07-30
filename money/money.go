@@ -10,6 +10,8 @@ import (
 
 type Money int64 // 基本单位: 分
 
+var _ fmt.Stringer = Money(0)
+
 var (
 	_ json.Marshaler   = Money(0)
 	_ json.Unmarshaler = (*Money)(nil)
@@ -19,6 +21,11 @@ var (
 	_ encoding.TextMarshaler   = Money(0)
 	_ encoding.TextUnmarshaler = (*Money)(nil)
 )
+
+func (p Money) String() string {
+	text, _ := p.MarshalJSON()
+	return string(text[1 : len(text)-1])
+}
 
 // MarshalJSON 将 Money 编码成 "xxxx.yz" 这样以 元 为单位的字符串.
 func (p Money) MarshalJSON() ([]byte, error) {
@@ -94,10 +101,7 @@ func (p Money) MarshalJSON() ([]byte, error) {
 
 // MarshalText 将 Money 编码成 xxxx.yz 这样以 元 为单位的字符串.
 func (p Money) MarshalText() (text []byte, err error) {
-	text, err = p.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
+	text, _ = p.MarshalJSON()
 	return text[1 : len(text)-1], nil
 }
 
