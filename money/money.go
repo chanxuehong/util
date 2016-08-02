@@ -29,8 +29,8 @@ var (
 )
 
 func (v Money) String() string {
-	text, _ := v.MarshalJSON()
-	return string(text[1 : len(text)-1])
+	text, _ := v.MarshalText()
+	return string(text)
 }
 
 // MarshalJSON 将 Money 编码成 "xxxx.yz" 这样以 元 为单位的字符串.
