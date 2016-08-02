@@ -3,6 +3,7 @@ package money
 import (
 	"encoding"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"strconv"
 	"strings"
@@ -18,18 +19,23 @@ var (
 )
 
 var (
+	_ xml.Marshaler   = Money(0)
+	_ xml.Unmarshaler = (*Money)(nil)
+)
+
+var (
 	_ encoding.TextMarshaler   = Money(0)
 	_ encoding.TextUnmarshaler = (*Money)(nil)
 )
 
-func (p Money) String() string {
-	text, _ := p.MarshalJSON()
+func (v Money) String() string {
+	text, _ := v.MarshalJSON()
 	return string(text[1 : len(text)-1])
 }
 
 // MarshalJSON 将 Money 编码成 "xxxx.yz" 这样以 元 为单位的字符串.
-func (p Money) MarshalJSON() ([]byte, error) {
-	switch n := int64(p); {
+func (v Money) MarshalJSON() ([]byte, error) {
+	switch n := int64(v); {
 	case n > 0:
 		str := strconv.FormatInt(n, 10)
 		switch len(str) {
@@ -99,14 +105,26 @@ func (p Money) MarshalJSON() ([]byte, error) {
 	}
 }
 
+// MarshalXML 将 Money 编码成 xxxx.yz 这样以 元 为单位的字符串.
+func (v Money) MarshalXML(e *xml.Encoder, start xml.StartElement) (err error) {
+	if err = e.EncodeToken(start); err != nil {
+		return
+	}
+	text, _ := v.MarshalText()
+	if err = e.EncodeToken(xml.CharData(text)); err != nil {
+		return
+	}
+	return e.EncodeToken(xml.EndElement{Name: start.Name})
+}
+
 // MarshalText 将 Money 编码成 xxxx.yz 这样以 元 为单位的字符串.
-func (p Money) MarshalText() (text []byte, err error) {
-	text, _ = p.MarshalJSON()
+func (v Money) MarshalText() (text []byte, err error) {
+	text, _ = v.MarshalJSON()
 	return text[1 : len(text)-1], nil
 }
 
 // UnmarshalJSON 将 "xxxx.yz" 这样以 元 为单位的字符串解码到 Money 中.
-func (p *Money) UnmarshalJSON(data []byte) error {
+func (p *Money) UnmarshalJSON(data []byte) (err error) {
 	maxIndex := len(data) - 1
 	if maxIndex < 2 || data[0] != '"' || data[maxIndex] != '"' {
 		return fmt.Errorf("invalid Money JSON text: %s", data)
@@ -114,8 +132,17 @@ func (p *Money) UnmarshalJSON(data []byte) error {
 	return p.UnmarshalText(data[1:maxIndex])
 }
 
+// UnmarshalXML 将 xxxx.yz 这样以 元 为单位的字符串解码到 Money 中.
+func (p *Money) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+	var text []byte
+	if err = d.DecodeElement(&text, &start); err != nil {
+		return
+	}
+	return p.UnmarshalText(text)
+}
+
 // UnmarshalText 将 xxxx.yz 这样以 元 为单位的字符串解码到 Money 中.
-func (p *Money) UnmarshalText(text []byte) error {
+func (p *Money) UnmarshalText(text []byte) (err error) {
 	if len(text) == 0 {
 		return fmt.Errorf("invalid Money text: %s", text)
 	}
