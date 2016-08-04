@@ -13,8 +13,6 @@ import (
 // Money 表示金钱, 单位为分.
 type Money int64
 
-var _ fmt.Stringer = Money(0)
-
 var (
 	_ encoding.TextMarshaler   = Money(0)
 	_ encoding.TextUnmarshaler = (*Money)(nil)
@@ -30,8 +28,8 @@ var (
 	_ xml.Unmarshaler = (*Money)(nil)
 )
 
-// String 将 Money 编码成 xxxx.yz 这样以 '元' 为单位的字符串.
-func (m Money) String() string {
+// Text 将 Money 编码成 xxxx.yz 这样以 '元' 为单位的字符串.
+func (m Money) Text() string {
 	text, _ := m.MarshalText()
 	return string(text)
 }

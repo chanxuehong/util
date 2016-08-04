@@ -15,8 +15,6 @@ import (
 // Money2 是 Money 的扩展, 支持数据库 decimal(x.2) 类型的直接存取.
 type Money2 int64
 
-var _ fmt.Stringer = Money2(0)
-
 var (
 	_ encoding.TextMarshaler   = Money2(0)
 	_ encoding.TextUnmarshaler = (*Money2)(nil)
@@ -56,9 +54,9 @@ func (m *Money2) Scan(value interface{}) error {
 	}
 }
 
-// String 将 Money2 编码成 xxxx.yz 这样以 '元' 为单位的字符串.
-func (m Money2) String() string {
-	return Money(m).String()
+// Text 将 Money2 编码成 xxxx.yz 这样以 '元' 为单位的字符串.
+func (m Money2) Text() string {
+	return Money(m).Text()
 }
 
 // MarshalText 将 Money2 编码成 xxxx.yz 这样以 '元' 为单位的字符串.
