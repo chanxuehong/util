@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -127,27 +128,31 @@ func (m Money) MarshalXML(e *xml.Encoder, start xml.StartElement) (err error) {
 
 // UnmarshalText 将 xxxx.yz 这样以 '元' 为单位的字符串解码到 Money 中.
 func (m *Money) UnmarshalText(text []byte) (err error) {
-	if len(text) == 0 {
-		return fmt.Errorf("invalid Money text: %s", text)
+	return m.UnmarshalTextString(string(text))
+}
+
+// UnmarshalTextString 将 xxxx.yz 这样以 '元' 为单位的字符串解码到 Money 中.
+func (m *Money) UnmarshalTextString(text string) (err error) {
+	if text == "" {
+		return errors.New("invalid Money text, it should not be empty")
 	}
-	str := string(text)
-	if dotIndex := strings.IndexByte(str, '.'); dotIndex >= 0 {
-		dotFront := str[:dotIndex]
-		dotBehind := str[dotIndex+1:]
+	if dotIndex := strings.IndexByte(text, '.'); dotIndex >= 0 {
+		dotFront := text[:dotIndex]
+		dotBehind := text[dotIndex+1:]
 		switch len(dotBehind) {
 		default:
 			return fmt.Errorf("invalid Money text: %s", text)
 		case 0:
-			str = dotFront + "00"
+			text = dotFront + "00"
 		case 1:
-			str = dotFront + dotBehind + "0"
+			text = dotFront + dotBehind + "0"
 		case 2:
-			str = dotFront + dotBehind
+			text = dotFront + dotBehind
 		}
 	} else {
-		str += "00"
+		text += "00"
 	}
-	n, err := strconv.ParseInt(str, 10, 64)
+	n, err := strconv.ParseInt(text, 10, 64)
 	if err != nil {
 		return fmt.Errorf("invalid Money text: %s", text)
 	}

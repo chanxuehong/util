@@ -81,6 +81,11 @@ func (m *Money2) UnmarshalText(text []byte) (err error) {
 	return ((*Money)(m)).UnmarshalText(text)
 }
 
+// UnmarshalTextString 将 xxxx.yz 这样以 '元' 为单位的字符串解码到 Money2 中.
+func (m *Money2) UnmarshalTextString(text string) (err error) {
+	return ((*Money)(m)).UnmarshalTextString(text)
+}
+
 // UnmarshalJSON 将 "xxxx.yz" 这样以 '元' 为单位的字符串解码到 Money2 中.
 func (m *Money2) UnmarshalJSON(data []byte) (err error) {
 	return ((*Money)(m)).UnmarshalJSON(data)
