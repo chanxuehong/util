@@ -31,15 +31,11 @@ func (x *Int64) UnmarshalJSON(data []byte) (err error) {
 		*x = Int64(n)
 		return nil
 	}
-	data2 := data[1:]
-	if len(data2) == 0 {
+	maxIndex := len(data) - 1
+	if maxIndex < 2 || data[maxIndex] != '"' {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
 	}
-	data2 = data2[:len(data2)-1]
-	if len(data2) == 0 {
-		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
-	}
-	n, err := strconv.ParseInt(string(data2), 10, 64)
+	n, err := strconv.ParseInt(string(data[1:maxIndex]), 10, 64)
 	if err != nil {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
 	}

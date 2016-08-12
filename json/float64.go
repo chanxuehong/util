@@ -28,15 +28,11 @@ func (x *Float64) UnmarshalJSON(data []byte) (err error) {
 		*x = Float64(n)
 		return nil
 	}
-	data2 := data[1:]
-	if len(data2) == 0 {
+	maxIndex := len(data) - 1
+	if maxIndex < 2 || data[maxIndex] != '"' {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Float64", data)
 	}
-	data2 = data2[:len(data2)-1]
-	if len(data2) == 0 {
-		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Float64", data)
-	}
-	n, err := strconv.ParseFloat(string(data2), 64)
+	n, err := strconv.ParseFloat(string(data[1:maxIndex]), 64)
 	if err != nil {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Float64", data)
 	}
