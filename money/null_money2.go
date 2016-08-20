@@ -8,6 +8,9 @@ import (
 var _ sql.Scanner = (*NullMoney2)(nil)
 var _ driver.Value = NullMoney2{}
 
+// NullMoney2 represents an Money2 that may be null.
+// NullMoney2 implements the Scanner interface so
+// it can be used as a scan destination, similar to NullString.
 type NullMoney2 struct {
 	Money Money2
 	Valid bool
