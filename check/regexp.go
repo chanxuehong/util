@@ -26,7 +26,7 @@ const (
 	mailPattern = `^[a-z0-9A-Z]+([\-_\.][a-z0-9A-Z]+)*@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)*?\.)+[a-zA-Z]{2,4}$`
 
 	chineseNamePattern   = "^\\p{Han}+(\u00B7\\p{Han}+)*?$"
-	chineseNameExPattern = "^\\p{Han}+([\u00B7\u2022\u2027\u30FB\u0387\u16EB\u2219\u22C5\uFF65\u05BC]\\p{Han}+)*?$"
+	chineseNameExPattern = "^\\p{Han}+([\u00B7\u2022\u2027\u30FB\u002E\u0387\u16EB\u2219\u22C5\uFF65\u05BC]\\p{Han}+)*?$"
 )
 
 var (
@@ -135,7 +135,7 @@ func IsChineseNameEx(b []byte) ([]byte, bool) {
 	list := []rune(string(b))
 	for i := 0; i < len(list); i++ {
 		switch list[i] {
-		case '\u2022', '\u2027', '\u30FB', '\u0387', '\u16EB', '\u2219', '\u22C5', '\uFF65', '\u05BC':
+		case '\u2022', '\u2027', '\u30FB', '\u002E', '\u0387', '\u16EB', '\u2219', '\u22C5', '\uFF65', '\u05BC':
 			list[i] = '\u00B7'
 		}
 	}
@@ -153,7 +153,7 @@ func IsChineseNameStringEx(s string) (string, bool) {
 	list := []rune(s)
 	for i := 0; i < len(list); i++ {
 		switch list[i] {
-		case '\u2022', '\u2027', '\u30FB', '\u0387', '\u16EB', '\u2219', '\u22C5', '\uFF65', '\u05BC':
+		case '\u2022', '\u2027', '\u30FB', '\u002E', '\u0387', '\u16EB', '\u2219', '\u22C5', '\uFF65', '\u05BC':
 			list[i] = '\u00B7'
 		}
 	}
