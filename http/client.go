@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-var DefaultLANClient = http.Client{
+var DefaultLANClient = &http.Client{
 	Transport: DefaultLANTransport,
 	Timeout:   time.Second * 5,
 }
 
-var DefaultWANClient = http.Client{
+var DefaultWANClient = &http.Client{
 	Transport: DefaultWANTransport,
 	Timeout:   time.Second * 10,
 }
