@@ -13,9 +13,21 @@ type Version struct {
 	Major, Minor, Patch int
 }
 
+func NewVersion(major, minor, patch int) Version {
+	return Version{
+		Major: major,
+		Minor: minor,
+		Patch: patch,
+	}
+}
+
 // String 将 Version 格式化成 x.y.z 的字符串形式.
 func (v Version) String() string {
 	return strconv.Itoa(v.Major) + "." + strconv.Itoa(v.Minor) + "." + strconv.Itoa(v.Patch)
+}
+
+func (v Version) Compare(v2 Version) int {
+	return Compare(v, v2)
 }
 
 // Parse 解析字符串 x.y.z 到 Version 对象.
