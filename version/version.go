@@ -26,6 +26,10 @@ func (v Version) String() string {
 	return strconv.Itoa(v.Major) + "." + strconv.Itoa(v.Minor) + "." + strconv.Itoa(v.Patch)
 }
 
+// Compare 比较 v, v2 的大小.
+//  返回 -1 表示 v < v2
+//  返回 0  表示 v == v2
+//  返回 +1  表示 v > v2
 func (v Version) Compare(v2 Version) int {
 	return Compare(v, v2)
 }
