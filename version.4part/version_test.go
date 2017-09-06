@@ -2,12 +2,22 @@ package version
 
 import "testing"
 
+func TestNew(t *testing.T) {
+	have := New(1, 2, 3, 4)
+	want := Version{1, 2, 3, 4}
+	if have != want {
+		t.Errorf("Test New(1,2,3,4) failed, have %+v, want %+v", have, want)
+		return
+	}
+}
+
 func TestString(t *testing.T) {
 	v := Version{1, 2, 3, 4}
 	have := v.String()
 	want := "1.2.3.4"
 	if have != want {
 		t.Errorf("Version{1, 2, 3, 4}.String() failed, have %q, want %q", have, want)
+		return
 	}
 }
 
@@ -158,10 +168,11 @@ func TestParse(t *testing.T) {
 		v, ok := Parse(item.str)
 		if ok != item.ok {
 			t.Errorf("Parse(%q) failed, have(Version, %v), want(Version, %v)", item.str, ok, item.ok)
-			continue
+			return
 		}
 		if ok && v != item.v {
 			t.Errorf("Parse(%q) failed, have(%+v, %v), want(%+v, %v)", item.str, v, ok, item.v, item.ok)
+			return
 		}
 	}
 }

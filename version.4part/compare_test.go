@@ -1294,6 +1294,7 @@ func TestCompare(t *testing.T) {
 		result := Compare(v.a, v.b)
 		if result != v.result {
 			t.Errorf("Compare(%+v, %+v) failed, have %d, want %d", v.a, v.b, result, v.result)
+			return
 		}
 	}
 }
