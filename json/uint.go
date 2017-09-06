@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-
-	"github.com/chanxuehong/util/math"
 )
 
 type Uint uint
@@ -26,7 +24,7 @@ func (x *Uint) UnmarshalJSON(data []byte) (err error) {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Uint", data)
 	}
 	if data[0] != '"' {
-		n, err := strconv.ParseUint(string(data), 10, math.UintSize)
+		n, err := strconv.ParseUint(string(data), 10, 0)
 		if err != nil {
 			return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Uint", data)
 		}
@@ -37,7 +35,7 @@ func (x *Uint) UnmarshalJSON(data []byte) (err error) {
 	if maxIndex < 2 || data[maxIndex] != '"' {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Uint", data)
 	}
-	n, err := strconv.ParseUint(string(data[1:maxIndex]), 10, math.UintSize)
+	n, err := strconv.ParseUint(string(data[1:maxIndex]), 10, 0)
 	if err != nil {
 		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Uint", data)
 	}
