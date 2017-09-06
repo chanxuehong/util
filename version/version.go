@@ -8,7 +8,7 @@ import (
 
 var _ fmt.Stringer = Version{}
 
-// Version 表示一个版本号
+// Version 表示一个版本号.
 type Version struct {
 	Major, Minor, Patch int
 }
