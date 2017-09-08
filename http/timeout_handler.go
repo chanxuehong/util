@@ -84,6 +84,8 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(tw.code)
 		w.Write(tw.wbuf.Bytes())
+		tw.timedOut = true
+		return
 	case <-ctx.Done():
 		tw.mu.Lock()
 		defer tw.mu.Unlock()
