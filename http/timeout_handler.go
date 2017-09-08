@@ -64,8 +64,9 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(ctx)
 	done := make(chan struct{})
 	tw := &timeoutWriter{
-		w: w,
-		h: make(http.Header),
+		w:             w,
+		h:             make(http.Header),
+		closeNotifyCh: make(chan bool, 1),
 	}
 	go func() {
 		h.handler.ServeHTTP(tw, r)
@@ -85,6 +86,7 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(tw.code)
 		w.Write(tw.wbuf.Bytes())
 		tw.handlerDone = true
+		tw.closeNotifyCh <- true
 		return
 	case <-ctx.Done():
 		tw.mu.Lock()
@@ -92,6 +94,7 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(h.errorCode())
 		io.WriteString(w, h.errorBody())
 		tw.timedOut = true
+		tw.closeNotifyCh <- true
 		return
 	}
 }
@@ -100,6 +103,8 @@ type timeoutWriter struct {
 	w    http.ResponseWriter
 	h    http.Header
 	wbuf bytes.Buffer
+
+	closeNotifyCh chan bool
 
 	mu          sync.Mutex
 	timedOut    bool
@@ -160,5 +165,5 @@ func (tw *timeoutWriter) CloseNotify() <-chan bool {
 	if v, ok := tw.w.(http.CloseNotifier); ok {
 		return v.CloseNotify()
 	}
-	return make(chan bool, 1)
+	return tw.closeNotifyCh
 }
