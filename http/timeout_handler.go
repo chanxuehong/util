@@ -14,7 +14,7 @@ import (
 // The new http.Handler calls h.ServeHTTP to handle each request, but if a
 // call runs for longer than its time limit, the handler responds with
 // the given http status code and the given message in its body.
-// (If msg is empty, a suitable default message will be sent.)
+// (If code is 0, http.StatusServiceUnavailable will be sent; If msg is empty, a suitable default message will be sent.)
 // After such a timeout, writes by h to its http.ResponseWriter will return
 // http.ErrHandlerTimeout.
 //
@@ -84,7 +84,7 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		w.WriteHeader(tw.code)
 		w.Write(tw.wbuf.Bytes())
-		tw.timedOut = true
+		tw.handlerDone = true
 		return
 	case <-ctx.Done():
 		tw.mu.Lock()
@@ -103,6 +103,7 @@ type timeoutWriter struct {
 
 	mu          sync.Mutex
 	timedOut    bool
+	handlerDone bool
 	wroteHeader bool
 	code        int
 }
@@ -115,6 +116,9 @@ func (tw *timeoutWriter) Write(p []byte) (int, error) {
 	if tw.timedOut {
 		return 0, http.ErrHandlerTimeout
 	}
+	if tw.handlerDone {
+		return 0, http.ErrContentLength
+	}
 	if !tw.wroteHeader {
 		tw.writeHeader(http.StatusOK)
 	}
@@ -124,7 +128,7 @@ func (tw *timeoutWriter) Write(p []byte) (int, error) {
 func (tw *timeoutWriter) WriteHeader(code int) {
 	tw.mu.Lock()
 	defer tw.mu.Unlock()
-	if tw.timedOut || tw.wroteHeader {
+	if tw.timedOut || tw.wroteHeader || tw.handlerDone {
 		return
 	}
 	tw.writeHeader(code)
@@ -140,6 +144,9 @@ func (tw *timeoutWriter) WriteString(s string) (n int, err error) {
 	defer tw.mu.Unlock()
 	if tw.timedOut {
 		return 0, http.ErrHandlerTimeout
+	}
+	if tw.handlerDone {
+		return 0, http.ErrContentLength
 	}
 	if !tw.wroteHeader {
 		tw.writeHeader(http.StatusOK)
