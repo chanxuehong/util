@@ -85,10 +85,9 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		wbuf = new(bytes.Buffer)
 	}
 	tw := &timeoutWriter{
-		w:             w,
-		h:             make(http.Header),
-		wbuf:          wbuf,
-		closeNotifyCh: make(chan bool, 1),
+		w:    w,
+		h:    make(http.Header),
+		wbuf: wbuf,
 	}
 	go func() {
 		h.handler.ServeHTTP(tw, r)
@@ -108,7 +107,9 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(tw.code)
 		w.Write(tw.wbuf.Bytes())
 		tw.handlerDone = true
-		tw.closeNotifyCh <- true
+		if tw.closeNotifyCh != nil {
+			tw.closeNotifyCh <- true
+		}
 		return
 	case <-ctx.Done():
 		tw.mu.Lock()
@@ -116,7 +117,9 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(h.errorCode())
 		io.WriteString(w, h.errorBody())
 		tw.timedOut = true
-		tw.closeNotifyCh <- true
+		if tw.closeNotifyCh != nil {
+			tw.closeNotifyCh <- true
+		}
 		return
 	}
 }
@@ -186,6 +189,9 @@ func (tw *timeoutWriter) CloseNotify() <-chan bool {
 	defer tw.mu.Unlock()
 	if v, ok := tw.w.(http.CloseNotifier); ok {
 		return v.CloseNotify()
+	}
+	if tw.closeNotifyCh == nil {
+		tw.closeNotifyCh = make(chan bool, 1)
 	}
 	return tw.closeNotifyCh
 }
