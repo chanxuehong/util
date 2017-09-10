@@ -1,3 +1,7 @@
+// Copyright 2009 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package http
 
 import (
@@ -9,23 +13,31 @@ import (
 	"time"
 )
 
+// A BufferPool is an interface for getting and returning temporary bytes.Buffer.
+type BufferPool interface {
+	Get() *bytes.Buffer
+	Put(*bytes.Buffer)
+}
+
 // TimeoutHandler returns a http.Handler that runs h with the given time limit.
 //
 // The new http.Handler calls h.ServeHTTP to handle each request, but if a
 // call runs for longer than its time limit, the handler responds with
 // the given http status code and the given message in its body.
 // (If code is 0, http.StatusServiceUnavailable will be sent; If msg is empty, a suitable default message will be sent.)
+// pool can be nil, and if it is nil, we use new(bytes.Buffer) to get bytes.Buffer every times.
 // After such a timeout, writes by h to its http.ResponseWriter will return
 // http.ErrHandlerTimeout.
 //
 // TimeoutHandler buffers all http.Handler writes to memory and does not
 // support the http.Hijacker or http.Flusher interfaces.
-func TimeoutHandler(h http.Handler, dt time.Duration, code int, msg string) http.Handler {
+func TimeoutHandler(h http.Handler, dt time.Duration, code int, msg string, pool BufferPool) http.Handler {
 	return &timeoutHandler{
 		handler: h,
 		code:    code,
 		body:    msg,
 		dt:      dt,
+		pool:    pool,
 	}
 }
 
@@ -34,6 +46,7 @@ type timeoutHandler struct {
 	code    int
 	body    string
 	dt      time.Duration
+	pool    BufferPool
 
 	// When set, no context will be created and this context will
 	// be used instead.
@@ -63,9 +76,18 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	r = r.WithContext(ctx)
 	done := make(chan struct{})
+	var wbuf *bytes.Buffer
+	if h.pool != nil {
+		wbuf = h.pool.Get()
+		wbuf.Reset()
+		defer h.pool.Put(wbuf)
+	} else {
+		wbuf = new(bytes.Buffer)
+	}
 	tw := &timeoutWriter{
 		w:             w,
 		h:             make(http.Header),
+		wbuf:          wbuf,
 		closeNotifyCh: make(chan bool, 1),
 	}
 	go func() {
@@ -102,7 +124,7 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 type timeoutWriter struct {
 	w    http.ResponseWriter
 	h    http.Header
-	wbuf bytes.Buffer
+	wbuf *bytes.Buffer
 
 	closeNotifyCh chan bool
 
