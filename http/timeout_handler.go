@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+type Skipper func(*http.Request) bool
+
 // A BufferPool is an interface for getting and returning temporary bytes.Buffer.
 type BufferPool interface {
 	Get() *bytes.Buffer
@@ -31,13 +33,14 @@ type BufferPool interface {
 //
 // TimeoutHandler buffers all http.Handler writes to memory and does not
 // support the http.Hijacker or http.Flusher interfaces.
-func TimeoutHandler(h http.Handler, dt time.Duration, code int, msg string, pool BufferPool) http.Handler {
+func TimeoutHandler(h http.Handler, dt time.Duration, code int, msg string, pool BufferPool, skipper Skipper) http.Handler {
 	return &timeoutHandler{
 		handler: h,
 		code:    code,
 		body:    msg,
 		dt:      dt,
 		pool:    pool,
+		skipper: skipper,
 	}
 }
 
@@ -47,6 +50,7 @@ type timeoutHandler struct {
 	body    string
 	dt      time.Duration
 	pool    BufferPool
+	skipper Skipper
 
 	// When set, no context will be created and this context will
 	// be used instead.
@@ -68,6 +72,10 @@ func (h *timeoutHandler) errorBody() string {
 }
 
 func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h.skipper != nil && h.skipper(r) {
+		h.handler.ServeHTTP(w, r)
+		return
+	}
 	ctx := h.testContext
 	if ctx == nil {
 		var cancelCtx context.CancelFunc
