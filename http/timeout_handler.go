@@ -97,11 +97,19 @@ func (h *timeoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h:    make(http.Header),
 		wbuf: wbuf,
 	}
+	panicChan := make(chan interface{}, 1)
 	go func() {
+		defer func() {
+			if p := recover(); p != nil {
+				panicChan <- p
+			}
+		}()
 		h.handler.ServeHTTP(tw, r)
 		close(done)
 	}()
 	select {
+	case p := <-panicChan:
+		panic(p)
 	case <-done:
 		tw.mu.Lock()
 		defer tw.mu.Unlock()
