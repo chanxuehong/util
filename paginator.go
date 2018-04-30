@@ -32,7 +32,7 @@ func Paginator0(pageNum, currentPageIndex int) ([]int, error) {
 		return []int{0}, nil
 	case pageNum <= currentPageIndexRangeNum: // 游标滑块大小内, 肯定是不需要加省略号的
 		arr := make([]int, pageNum)
-		for i := 0; i < pageNum; i++ {
+		for i := range arr {
 			arr[i] = i
 		}
 		return arr, nil
@@ -54,7 +54,7 @@ func Paginator0(pageNum, currentPageIndex int) ([]int, error) {
 		if rangeBeginPageIndex <= paginatorBeginNum { // 跟前面相连
 			if rangeEndPageIndex >= maxPageIndex-paginatorEndNum { // 跟后面相连
 				arr := make([]int, pageNum)
-				for i := 0; i < pageNum; i++ {
+				for i := range arr {
 					arr[i] = i
 				}
 				return arr, nil
