@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestStoreLoadBool(t *testing.T) {
+func TestBool_Store_Load(t *testing.T) {
 	var b Bool // zero value is false
 	v := b.Load()
 	if v {
@@ -31,6 +31,146 @@ func TestStoreLoadBool(t *testing.T) {
 	v = b.Load()
 	if !v {
 		t.Errorf("want true, not false")
+		return
+	}
+}
+
+func TestBool_Swap(t *testing.T) {
+	var val Bool
+
+	val.Store(true)
+	old := val.Swap(true)
+	if !old {
+		t.Errorf("want true, not false")
+		return
+	}
+	if !val.Load() {
+		t.Errorf("want true, not false")
+		return
+	}
+
+	val.Store(true)
+	old = val.Swap(false)
+	if !old {
+		t.Errorf("want true, not false")
+		return
+	}
+	if val.Load() {
+		t.Errorf("want false, not true")
+		return
+	}
+
+	val.Store(false)
+	old = val.Swap(true)
+	if old {
+		t.Errorf("want false, not true")
+		return
+	}
+	if !val.Load() {
+		t.Errorf("want true, not false")
+		return
+	}
+
+	val.Store(false)
+	old = val.Swap(false)
+	if old {
+		t.Errorf("want false, not true")
+		return
+	}
+	if val.Load() {
+		t.Errorf("want false, not true")
+		return
+	}
+}
+
+func TestBool_CompareAndSwap(t *testing.T) {
+	var val Bool
+
+	val.Store(true)
+	swapped := val.CompareAndSwap(false, false)
+	if swapped {
+		t.Errorf("want false, not true")
+		return
+	}
+	if !val.Load() {
+		t.Errorf("want true, not false")
+		return
+	}
+
+	val.Store(true)
+	swapped = val.CompareAndSwap(true, false)
+	if !swapped {
+		t.Errorf("want true, not false")
+		return
+	}
+	if val.Load() {
+		t.Errorf("want false, not true")
+		return
+	}
+
+	val.Store(true)
+	swapped = val.CompareAndSwap(false, true)
+	if swapped {
+		t.Errorf("want false, not true")
+		return
+	}
+	if !val.Load() {
+		t.Errorf("want true, not false")
+		return
+	}
+
+	val.Store(true)
+	swapped = val.CompareAndSwap(true, true)
+	if !swapped {
+		t.Errorf("want true, not false")
+		return
+	}
+	if !val.Load() {
+		t.Errorf("want true, not false")
+		return
+	}
+
+	val.Store(false)
+	swapped = val.CompareAndSwap(false, false)
+	if !swapped {
+		t.Errorf("want true, not false")
+		return
+	}
+	if val.Load() {
+		t.Errorf("want false, not true")
+		return
+	}
+
+	val.Store(false)
+	swapped = val.CompareAndSwap(true, false)
+	if swapped {
+		t.Errorf("want false, not true")
+		return
+	}
+	if val.Load() {
+		t.Errorf("want false, not true")
+		return
+	}
+
+	val.Store(false)
+	swapped = val.CompareAndSwap(false, true)
+	if !swapped {
+		t.Errorf("want true, not false")
+		return
+	}
+	if !val.Load() {
+		t.Errorf("want true, not false")
+		return
+	}
+
+	val.Store(false)
+	swapped = val.CompareAndSwap(true, true)
+	if swapped {
+		t.Errorf("want false, not true")
+		return
+	}
+	if val.Load() {
+		t.Errorf("want false, not true")
 		return
 	}
 }
