@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io"
+	"strings"
 )
 
 // DecodeXMLToMap decodes xml reading from io.Reader and returns the first-level sub-node key-value set,
@@ -16,7 +17,7 @@ func DecodeXMLToMap(r io.Reader) (m map[string]string, err error) {
 		depth   = 0
 		token   xml.Token
 		key     string
-		value   bytes.Buffer
+		value   strings.Builder
 	)
 	for {
 		token, err = decoder.Token()
@@ -60,6 +61,54 @@ func DecodeXMLToMap(r io.Reader) (m map[string]string, err error) {
 func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err error) {
 	switch v := w.(type) {
 	case *bytes.Buffer:
+		bufw := v
+		if err = bufw.WriteByte('<'); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(rootname); err != nil {
+			return
+		}
+		if err = bufw.WriteByte('>'); err != nil {
+			return
+		}
+
+		for k, v := range m {
+			if err = bufw.WriteByte('<'); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if err = bufw.WriteByte('>'); err != nil {
+				return
+			}
+
+			if err = xml.EscapeText(bufw, []byte(v)); err != nil {
+				return
+			}
+
+			if _, err = bufw.WriteString("</"); err != nil {
+				return
+			}
+			if _, err = bufw.WriteString(k); err != nil {
+				return
+			}
+			if err = bufw.WriteByte('>'); err != nil {
+				return
+			}
+		}
+
+		if _, err = bufw.WriteString("</"); err != nil {
+			return
+		}
+		if _, err = bufw.WriteString(rootname); err != nil {
+			return
+		}
+		if err = bufw.WriteByte('>'); err != nil {
+			return
+		}
+		return nil
+	case *strings.Builder:
 		bufw := v
 		if err = bufw.WriteByte('<'); err != nil {
 			return
