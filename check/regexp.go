@@ -23,7 +23,7 @@ const (
 	// 邮箱的域名可以包含 0-9, A-Z, a-z, -
 	// 连接字符 - 只能出现在中间, 不能连续, 如不能 --
 	// 支持多级域名, x@y.z, x@y.z.w, x@x.y.z.w.e
-	mailPattern = `^[a-z0-9A-Z]+([\-_\.][a-z0-9A-Z]+)*@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)*?\.)+[a-zA-Z]{2,4}$`
+	mailPattern = `^[a-z0-9A-Z]+([_\-\.][a-z0-9A-Z]+)*?@[a-z0-9A-Z]+([\-\.][a-z0-9A-Z]+)*?\.[a-zA-Z]{2,}$`
 
 	chineseNamePattern   = "^\\p{Han}+(\u00B7\\p{Han}+)*?$"
 	chineseNameExPattern = "^\\p{Han}+([\u00B7\u2022\u2027\u30FB\u002E\u0387\u16EB\u2219\u22C5\uFF65\u05BC]\\p{Han}+)*?$"
