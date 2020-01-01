@@ -1,43 +1,26 @@
 package json
 
 import (
-	"errors"
-	"fmt"
-	"strconv"
+	"encoding/json"
 )
 
+// Int64 是 int64 的 json 类型, marshal 会变成字符串, unmarshal 可以接受数字或字符串.
 type Int64 int64
 
-func (x Int64) MarshalJSON() (data []byte, err error) {
-	data = make([]byte, 0, 20+2)
-	data = append(data, '"')
-	data = strconv.AppendInt(data, int64(x), 10)
-	data = append(data, '"')
-	return
+var _ json.Marshaler = Int64(0)
+
+// MarshalJSON 实现了 json.Marshaler
+func (x Int64) MarshalJSON() ([]byte, error) {
+	return marshalInt(int64(x))
 }
 
-func (x *Int64) UnmarshalJSON(data []byte) (err error) {
-	if len(data) == 0 {
-		return errors.New("json: cannot unmarshal empty string into Go value of type Int64")
-	}
-	if len(data) > 20+2 {
-		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
-	}
-	if data[0] != '"' {
-		n, err := strconv.ParseInt(string(data), 10, 64)
-		if err != nil {
-			return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
-		}
-		*x = Int64(n)
-		return nil
-	}
-	maxIndex := len(data) - 1
-	if maxIndex < 2 || data[maxIndex] != '"' {
-		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
-	}
-	n, err := strconv.ParseInt(string(data[1:maxIndex]), 10, 64)
+var _ json.Unmarshaler = (*Int64)(nil)
+
+// UnmarshalJSON 实现了 json.Unmarshaler
+func (x *Int64) UnmarshalJSON(data []byte) error {
+	n, err := unmarshalInt(data, "Int64", 64)
 	if err != nil {
-		return fmt.Errorf("json: cannot unmarshal string %s into Go value of type Int64", data)
+		return err
 	}
 	*x = Int64(n)
 	return nil

@@ -1,0 +1,11 @@
+# goland or idea project configuration
+.idea
+.DS_Store
+
+# vscode and its go debugger
+/.vscode/
+/debug
+debug.test
+
+# vim temp file
+*.swp
