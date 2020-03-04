@@ -15,11 +15,11 @@ var _ json.Marshaler = Float64(0)
 
 // MarshalJSON 实现了 json.Marshaler
 func (x Float64) MarshalJSON() ([]byte, error) {
-	var buf [64]byte
 	data, err := json.Marshal(float64(x))
 	if err != nil {
 		return nil, err
 	}
+	var buf [64]byte
 	buf[0] = '"'
 	result := buf[:1]
 	result = append(result, data...)
