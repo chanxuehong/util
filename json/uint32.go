@@ -1,6 +1,7 @@
 package json
 
 import (
+	"bytes"
 	"encoding/json"
 )
 
@@ -18,6 +19,11 @@ var _ json.Unmarshaler = (*Uint32)(nil)
 
 // UnmarshalJSON 实现了 json.Unmarshaler
 func (x *Uint32) UnmarshalJSON(data []byte) error {
+	data = bytes.TrimSpace(data)
+	if bytes.Equal(data, jsonNullLiteral) {
+		// no-op
+		return nil
+	}
 	n, err := unmarshalUint(data, "Uint32", 32)
 	if err != nil {
 		return err

@@ -32,12 +32,12 @@ var _ json.Unmarshaler = (*Float32)(nil)
 // UnmarshalJSON 实现了 json.Unmarshaler
 func (x *Float32) UnmarshalJSON(data []byte) error {
 	data = bytes.TrimSpace(data)
+	if bytes.Equal(data, jsonNullLiteral) {
+		// no-op
+		return nil
+	}
 	if len(data) == 0 {
 		return errors.New("json: cannot unmarshal empty string into Go value of type Float32")
-	}
-	if bytes.Equal(data, jsonNullLiteral) {
-		*x = Float32(0)
-		return nil
 	}
 	if data[0] != '"' {
 		n, err := strconv.ParseFloat(string(data), 32)

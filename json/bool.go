@@ -29,7 +29,7 @@ func (x *Bool) UnmarshalJSON(data []byte) error {
 			return nil
 		}
 		if bytes.Equal(data, jsonNullLiteral) {
-			*x = Bool(false)
+			// no-op
 			return nil
 		}
 	case 5:

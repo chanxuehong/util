@@ -1,7 +1,6 @@
 package json
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
 )
@@ -23,12 +22,8 @@ func marshalUint(n uint64) ([]byte, error) {
 }
 
 func unmarshalInt(data []byte, typeName string, bitSize int) (int64, error) {
-	data = bytes.TrimSpace(data)
 	if len(data) == 0 {
 		return 0, fmt.Errorf("json: cannot unmarshal empty string into Go value of type %s", typeName)
-	}
-	if bytes.Equal(data, jsonNullLiteral) {
-		return 0, nil
 	}
 	if data[0] != '"' {
 		n, err := strconv.ParseInt(string(data), 10, bitSize)
@@ -49,12 +44,8 @@ func unmarshalInt(data []byte, typeName string, bitSize int) (int64, error) {
 }
 
 func unmarshalUint(data []byte, typeName string, bitSize int) (uint64, error) {
-	data = bytes.TrimSpace(data)
 	if len(data) == 0 {
 		return 0, fmt.Errorf("json: cannot unmarshal empty string into Go value of type %s", typeName)
-	}
-	if bytes.Equal(data, jsonNullLiteral) {
-		return 0, nil
 	}
 	if data[0] != '"' {
 		n, err := strconv.ParseUint(string(data), 10, bitSize)

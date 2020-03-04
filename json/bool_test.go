@@ -25,9 +25,11 @@ func TestBool_UnmarshalJSON(t *testing.T) {
 		}
 		for _, data := range tests {
 			var v1 T1
+			v1.X = true
 			err1 := json.Unmarshal(data, &v1)
 
 			var v2 T2
+			v2.X = true
 			err2 := json.Unmarshal(data, &v2)
 
 			if bool(v1.X) != v2.X || (err1 != nil && err2 == nil) || (err1 == nil && err2 != nil) {

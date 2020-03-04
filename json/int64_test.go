@@ -43,9 +43,11 @@ func TestInt64_UnmarshalJSON(t *testing.T) {
 		}
 		for _, data := range tests {
 			var v1 T1
+			v1.X = 100
 			err1 := json.Unmarshal(data, &v1)
 
 			var v2 T2
+			v2.X = 100
 			err2 := json.Unmarshal(data, &v2)
 
 			if int64(v1.X) != v2.X || (err1 != nil && err2 == nil) || (err1 == nil && err2 != nil) {
