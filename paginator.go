@@ -6,8 +6,9 @@ import (
 
 // 获取分页编号序列, 页码从 0 开始, 序列中非负整数表示页码, -1 表示省略,
 // 如 [0,1,-1,8,9,10,11,12,-1,15,16] 表示 0,1,...,8,9,10,11,12,...,15,16
-//  pageNum:          页面数量, 大于 0 的整数
-//  currentPageIndex: 当前页码, 从 0 开始编码
+//
+//	pageNum:          页面数量, 大于 0 的整数
+//	currentPageIndex: 当前页码, 从 0 开始编码
 func Paginator0(pageNum, currentPageIndex int) ([]int, error) {
 	const (
 		// 0,1,...,4,5,[6],7,8,...,10,11
@@ -101,8 +102,9 @@ func Paginator0(pageNum, currentPageIndex int) ([]int, error) {
 
 // 获取分页编号序列, 页码从 1 开始, 序列中正整数表示页码, -1 表示省略,
 // 如 [1,2,-1,8,9,10,11,12,-1,15,16] 表示 1,2,...,8,9,10,11,12,...,15,16
-//  pageNum:          页面数量, 大于 0 的整数
-//  currentPageIndex: 当前页码, 从 1 开始编码
+//
+//	pageNum:          页面数量, 大于 0 的整数
+//	currentPageIndex: 当前页码, 从 1 开始编码
 func Paginator1(pageNum, currentPageIndex int) (arr []int, err error) {
 	currentPageIndex--
 	arr, err = Paginator0(pageNum, currentPageIndex)
@@ -119,9 +121,10 @@ func Paginator1(pageNum, currentPageIndex int) (arr []int, err error) {
 
 // 获取分页编号序列, 页码从 0 开始, 序列中非负整数表示页码, -1 表示省略,
 // 如 [0,1,-1,8,9,10,11,12,-1,15,16] 表示 0,1,...,8,9,10,11,12,...,15,16
-//  totalItemNum:     总的记录数量, 不是页面数量, 非负整数
-//  pageSize:         每页显示的数量, 大于 0 的整数
-//  currentPageIndex: 当前页码, 从 0 开始编码
+//
+//	totalItemNum:     总的记录数量, 不是页面数量, 非负整数
+//	pageSize:         每页显示的数量, 大于 0 的整数
+//	currentPageIndex: 当前页码, 从 0 开始编码
 func Paginator0Ex(totalItemNum, pageSize, currentPageIndex int) (arr []int, pageNum int, err error) {
 	if totalItemNum < 0 {
 		err = errors.New("totalItemNum < 0")
@@ -144,9 +147,10 @@ func Paginator0Ex(totalItemNum, pageSize, currentPageIndex int) (arr []int, page
 
 // 获取分页编号序列, 页码从 1 开始, 序列中正整数表示页码, -1 表示省略,
 // 如 [1,2,-1,8,9,10,11,12,-1,15,16] 表示 1,2,...,8,9,10,11,12,...,15,16
-//  totalItemNum:     总的记录数量, 不是页面数量, 非负整数
-//  pageSize:         每页显示的数量, 大于 0 的整数
-//  currentPageIndex: 当前页码, 从 1 开始编码
+//
+//	totalItemNum:     总的记录数量, 不是页面数量, 非负整数
+//	pageSize:         每页显示的数量, 大于 0 的整数
+//	currentPageIndex: 当前页码, 从 1 开始编码
 func Paginator1Ex(totalItemNum, pageSize, currentPageIndex int) (arr []int, pageNum int, err error) {
 	if totalItemNum < 0 {
 		err = errors.New("totalItemNum < 0")

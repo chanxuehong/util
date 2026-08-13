@@ -1,9 +1,10 @@
 package version
 
 // Compare 比较两个 Version 的大小.
-//  返回 -1 表示 a < b
-//  返回 0  表示 a == b
-//  返回 +1 表示 a > b
+//
+//	返回 -1 表示 a < b
+//	返回 0  表示 a == b
+//	返回 +1 表示 a > b
 func Compare(a, b Version) int {
 	switch {
 	case a.Major < b.Major:

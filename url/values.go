@@ -58,7 +58,7 @@ func (v Values) Del(key string) {
 	delete(v, key)
 }
 
-// Encode encodes the values into ``URL encoded'' form
+// Encode encodes the values into “URL encoded” form
 // ("bar=baz&foo=quux") sorted by key.
 func (v Values) Encode() string {
 	if v == nil {

@@ -56,8 +56,9 @@ func DecodeXMLToMap(r io.Reader) (m map[string]string, err error) {
 }
 
 // EncodeXMLFromMap encodes map[string]string to io.Writer with xml format.
-//  NOTE: This function requires the rootname argument and the keys of m (type map[string]string) argument
-//  are legitimate xml name string that does not contain the required escape character!
+//
+//	NOTE: This function requires the rootname argument and the keys of m (type map[string]string) argument
+//	are legitimate xml name string that does not contain the required escape character!
 func EncodeXMLFromMap(w io.Writer, m map[string]string, rootname string) (err error) {
 	switch v := w.(type) {
 	case *bytes.Buffer:

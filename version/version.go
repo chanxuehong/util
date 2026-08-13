@@ -27,9 +27,10 @@ func (v Version) String() string {
 }
 
 // Compare 比较 v 和 v2 的大小.
-//  返回 -1 表示 v < v2
-//  返回 0  表示 v == v2
-//  返回 +1 表示 v > v2
+//
+//	返回 -1 表示 v < v2
+//	返回 0  表示 v == v2
+//	返回 +1 表示 v > v2
 func (v Version) Compare(v2 Version) int {
 	return Compare(v, v2)
 }
